@@ -1,9 +1,9 @@
 {
   "name": "call-graph-navi",
   "displayName": "Call Graph Navi",
-  "description": "Interactively explore call hierarchies and focus on what matters to understand your code’s structure",
+  "description": "Visualize and explore call graphs interactively in VS Code",
   "version": "0.1.0",
-  "publisher": "local",
+  "publisher": "D-grid375",
   "license": "MIT",
   "icon": "images/icon.png",
   "repository": {
