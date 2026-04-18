@@ -2,7 +2,7 @@
   "name": "call-graph-navi",
   "displayName": "Call Graph Navi",
   "description": "Visualize and explore call graphs interactively in VS Code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "D-grid375",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -91,7 +91,7 @@
     "watch:graph": "esbuild ./src/graph/main.ts --bundle --outfile=media/graph.js --format=iife --platform=browser --target=es2020 --watch",
     "watch": "npm run watch:extension",
     "vscode:prepublish": "npm run build",
-    "package": "npm run build && npm version patch --no-git-tag-version && npx @vscode/vsce package --no-dependencies --allow-missing-repository --baseContentUrl https://localhost/ --baseImagesUrl https://localhost/"
+    "package": "npm run build && npm version patch --no-git-tag-version && npx @vscode/vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",

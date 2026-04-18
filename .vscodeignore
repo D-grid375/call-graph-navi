@@ -1,0 +1,13 @@
+src/**
+docs/**
+out/**/*.map
+node_modules/**
+**/*.ts
+**/tsconfig*.json
+**/.eslintrc.json
+**/*.vsix
+esbuild.config.js
+.gitignore
+.gitattributes
+package-lock.json
+images/demo.gif
