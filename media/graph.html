@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none';
+             style-src {{cspSource}} 'unsafe-inline';
+             script-src 'nonce-{{nonce}}';
+             font-src {{cspSource}};
+             img-src {{cspSource}};" />
+  <link rel="stylesheet" href="{{cssUri}}" />
+  <title>Call Graph Navi</title>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="btn-hide-all" style="display: none;">Hide All</button> <!-- 非表示 -->
+    <button id="btn-reset">Reset View</button>
+    <button id="btn-show-all">Unhide All Nodes</button>
+    <button id="btn-export-plantuml">Export PlantUML</button>
+    <span class="spacer"></span>
+    <span id="search-box">
+      <span class="search-input-wrap">
+        <input id="search-input" type="text" placeholder="Search..." />
+        <span id="search-indicator">0/0</span>
+      </span>
+      <button id="btn-search-prev" type="button">
+        <svg class="chevron" viewBox="0 0 10 10" width="15" height="15" aria-hidden="true">
+          <path d="M3 6.5 L5 4 L7 6.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button id="btn-search-next" type="button">
+        <svg class="chevron" viewBox="0 0 10 10" width="15" height="15" aria-hidden="true">
+          <path d="M3 3.5 L5 6 L7 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </span>
+  </div>
+  <div id="graph-container">
+    <div id="info">No graph loaded.</div>
+    <svg id="graph" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0"
+                markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,-5L10,0L0,5" class="arrow-head"></path>
+        </marker>
+      </defs>
+      <g id="viewport"></g>
+    </svg>
+  </div>
+  <div id="tooltip" class="hidden"></div>
+  <div id="node-context-menu" class="hidden">
+    <button id="node-context-menu-show-path-to-root" type="button">Show Path to Root</button>
+    <button id="node-context-menu-outgoing" type="button">Show Outgoing in New Tab</button>
+    <button id="node-context-menu-incoming" type="button">Show Incoming in New Tab</button>
+  </div>
+  <script nonce="{{nonce}}" src="{{dagreUri}}"></script>
+  <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+</body>
+</html>

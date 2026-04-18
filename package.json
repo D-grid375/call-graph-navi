@@ -1,0 +1,105 @@
+{
+  "name": "call-graph-navi",
+  "displayName": "Call Graph Navi",
+  "description": "Interactively explore call hierarchies and focus on what matters to understand your code’s structure",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/D-grid375/call-graph-navi"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "call graph",
+    "call hierarchy",
+    "visualization",
+    "plantuml",
+    "code navigation"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "CallGraphNavi.showIncoming",
+        "title": "Show Incoming Call Graph",
+        "category": "Call Graph Navi"
+      },
+      {
+        "command": "CallGraphNavi.showOutgoing",
+        "title": "Show Outgoing Call Graph",
+        "category": "Call Graph Navi"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "CallGraphNavi.showIncoming",
+          "group": "navigation@100",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "CallGraphNavi.showOutgoing",
+          "group": "navigation@101",
+          "when": "editorTextFocus"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "CallGraphNavi.showIncoming",
+        "key": "ctrl+alt+q",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CallGraphNavi.showOutgoing",
+        "key": "ctrl+alt+w",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Call Graph Navi",
+      "properties": {
+        "CallGraphNavi.maxDepth": {
+          "type": "number",
+          "default": 0,
+          "description": "Maximum depth for call graph traversal (0 = unlimited)"
+        },
+        "CallGraphNavi.showArguments": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show function arguments in node labels (e.g. funcA(int x) vs funcA)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build:extension": "esbuild ./src/extension/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "build:graph": "esbuild ./src/graph/main.ts --bundle --outfile=media/graph.js --format=iife --platform=browser --target=es2020",
+    "build": "npm run build:extension && npm run build:graph",
+    "typecheck:extension": "tsc -p tsconfig.extension.json --noEmit",
+    "typecheck:graph": "tsc -p tsconfig.graph.json --noEmit",
+    "typecheck": "npm run typecheck:extension && npm run typecheck:graph",
+    "watch:extension": "esbuild ./src/extension/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --watch",
+    "watch:graph": "esbuild ./src/graph/main.ts --bundle --outfile=media/graph.js --format=iife --platform=browser --target=es2020 --watch",
+    "watch": "npm run watch:extension",
+    "vscode:prepublish": "npm run build",
+    "package": "npm run build && npm version patch --no-git-tag-version && npx @vscode/vsce package --no-dependencies --allow-missing-repository --baseContentUrl https://localhost/ --baseImagesUrl https://localhost/"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "dagre": "^0.8.5"
+  }
+}
