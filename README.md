@@ -14,9 +14,9 @@ Visualize call graphs in both directions:
 - **Incoming Call Graph** — Shows functions that call the selected function.
 
 ### Focused View
-Hide individual files or functions by clicking the × icon.<br>
-Right-click a node → "**Show Path to Root**" to display only the path from that node up to the root.<br>
 Cut out the noise and focus on the call structure you care about.
+- Hide individual files or functions by clicking the × icon.
+- Right-click a node → "**Show Path to Root**" to display only the path from that node up to the root.
 
 ### Jump to Definition
 Click any function to jump straight to its definition.
