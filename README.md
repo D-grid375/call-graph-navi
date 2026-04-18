@@ -1,6 +1,7 @@
 # Call Graph Navi
-Visualize call structures as directional graphs (incoming/outgoing) to better understand your code’s structure.
+Visualize call structures as directional graphs (incoming/outgoing) to better understand your code’s structure.<br>
 Language-agnostic — works with any language that supports Call Hierarchy. (see [Requirements](#requirements))
+
 ![demo](images/demo.gif)
 
 ---
@@ -13,8 +14,8 @@ Visualize call graphs in both directions:
 - **Incoming Call Graph** — Shows functions that call the selected function.
 
 ### Focused View
-Hide individual files or functions by clicking the × icon.
-Right-click a node → "**Show Path to Root**" to display only the path from that node up to the root.
+Hide individual files or functions by clicking the × icon.<br>
+Right-click a node → "**Show Path to Root**" to display only the path from that node up to the root.<br>
 Cut out the noise and focus on the call structure you care about.
 
 ### Jump to Definition
@@ -41,4 +42,7 @@ Click the "**Export PlantUML**" button in the top toolbar to export the current 
 ---
 
 ## Requirements
-- A language server with Call Hierarchy support must be installed and active for the target language (e.g. `ms-vscode.cpptools`, `clangd`, `rust-analyzer`, `Pylance`, `gopls`).
+A language server with Call Hierarchy support must be installed and active for the target language (e.g. `ms-vscode.cpptools`, `clangd`, `rust-analyzer`, `Pylance`, `gopls`).
+
+## Known Issues
+Rendering large graphs may take longer depending on their size.
