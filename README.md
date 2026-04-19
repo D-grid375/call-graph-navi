@@ -1,7 +1,12 @@
 # Call Graph Navi
-Visualize call structures as directional graphs (incoming/outgoing) to better understand your code’s structure.<br>
+Visualize function call structures as directional graphs (incoming/outgoing) to better understand your code’s structure.<br>
 Language-agnostic — works with any language that supports Call Hierarchy. (see [Requirements](#requirements))
 
+![graph_sample](images/graph_sample.png)
+
+---
+
+## Demo
 ![demo](images/demo.gif)
 
 ---
