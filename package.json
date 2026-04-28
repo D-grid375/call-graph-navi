@@ -2,7 +2,7 @@
   "name": "call-graph-navi",
   "displayName": "Call Graph Navi",
   "description": "Visualize and explore call graphs interactively in VS Code",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "D-grid375",
   "license": "MIT",
   "icon": "images/icon.png",

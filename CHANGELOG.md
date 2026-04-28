@@ -2,6 +2,8 @@
 
 All notable changes to this extension will be documented in this file.
 
+## 0.1.4
+- Fix error messages for the "Show Incoming Call Graph" and "Show Outgoing Call Graph" commands
 ## 0.1.3
 - Update readme
 ## 0.1.2

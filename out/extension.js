@@ -55,9 +55,7 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
   async getCallGraph(document, position, options) {
     const rootItems = await vscode.commands.executeCommand("vscode.prepareCallHierarchy", document.uri, position);
     if (!rootItems || rootItems.length === 0) {
-      throw new Error(
-        "\u30AB\u30FC\u30BD\u30EB\u4F4D\u7F6E\u304B\u3089Call Hierarchy\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u95A2\u6570\u540D\u306E\u4E0A\u306B\u30AB\u30FC\u30BD\u30EB\u3092\u7F6E\u3044\u3066\u304F\u3060\u3055\u3044\u3002"
-      );
+      throw new Error("No call hierarchy found\u2026");
     }
     const rootItem = rootItems[0];
     const rootId = _VSCodeAPIProvider.makeNodeId(rootItem);

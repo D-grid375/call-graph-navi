@@ -28,9 +28,7 @@ export class VSCodeAPIProvider {
     const rootItems = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>
       ('vscode.prepareCallHierarchy', document.uri, position);
     if (!rootItems || rootItems.length === 0) {
-      throw new Error(
-        'カーソル位置からCall Hierarchyを取得できませんでした。関数名の上にカーソルを置いてください。'
-      );
+      throw new Error('No call hierarchy found…');
     }
     const rootItem = rootItems[0];
     const rootId = VSCodeAPIProvider.makeNodeId(rootItem);
