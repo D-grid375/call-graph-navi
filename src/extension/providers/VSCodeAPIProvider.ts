@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { GraphDataTransformer, RawCallData } from '../transformer/GraphDataTransformer';
-import { CallGraphData, CallGraphOptions, GraphNode } from '../../shared/types';
+import { CallGraphData, CallGraphOptions, FileGroup, GraphEdge, GraphNode } from '../../shared/types';
 
 /**
  * VSCode の Call Hierarchy API を利用したデータプロバイダ。
@@ -8,16 +7,11 @@ import { CallGraphData, CallGraphOptions, GraphNode } from '../../shared/types';
  */
 export class VSCodeAPIProvider {
   /**
-   * @param transformer 取得した生データを `CallGraphData` に正規化する Transformer
-   */
-  constructor(private readonly transformer: GraphDataTransformer) {}
-
-  /**
    * カーソル位置の関数を起点に Call Hierarchy を再帰探索してコールグラフを構築する。
    *
    * 1. `vscode.prepareCallHierarchy` でルート関数を特定
    * 2. `traverse` で `outgoing` / `incoming` 方向に再帰探索
-   * 3. `transformer.transform` で Webview 用の `CallGraphData` へ正規化
+   * 3. ノード・エッジを `CallGraphData` へ正規化して返す
    *
    * @param document 起点関数が含まれるテキストドキュメント
    * @param position 起点関数のカーソル位置
@@ -30,33 +24,36 @@ export class VSCodeAPIProvider {
     position: vscode.Position,
     options: CallGraphOptions
   ): Promise<CallGraphData> {
-    const rootItems = await vscode.commands.executeCommand<
-      vscode.CallHierarchyItem[]
-    >('vscode.prepareCallHierarchy', document.uri, position); // 選択関数をVSCodeから取得（ルートになる関数）
-
+    // ルートノード取得
+    const rootItems = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>
+      ('vscode.prepareCallHierarchy', document.uri, position);
     if (!rootItems || rootItems.length === 0) {
       throw new Error(
         'カーソル位置からCall Hierarchyを取得できませんでした。関数名の上にカーソルを置いてください。'
       );
     }
-
     const rootItem = rootItems[0];
     const rootId = VSCodeAPIProvider.makeNodeId(rootItem);
 
-    const raw: RawCallData = {
-      rootNodeId: rootId,
-      direction: options.direction,
-      nodes: new Map<string, GraphNode>(),
-      edges: [],
-    };
-    raw.nodes.set(rootId, VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
-
+    // グラフ用データ初期化
+    const nodes = new Map<string, GraphNode>();
+    const edges: GraphEdge[] = [];
+    nodes.set(rootId, VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
     const visited = new Set<string>();
     const edgeKeys = new Set<string>();
 
-    await this.traverse(rootItem, rootId, 0, options, raw, visited, edgeKeys);
+    // ノードとエッジを再帰的に取得
+    await this.traverse(rootItem, rootId, 0, options, nodes, edges, visited, edgeKeys);
+    const nodesArray = Array.from(nodes.values());
 
-    return this.transformer.transform(raw);
+    // グラフ用データを返す
+    return {
+      rootNodeId: rootId,
+      direction: options.direction,
+      nodes: nodesArray,
+      edges,
+      files: VSCodeAPIProvider.groupByFile(nodesArray),
+    };
   }
 
   /**
@@ -113,7 +110,40 @@ export class VSCodeAPIProvider {
   }
 
   /**
-   * 再帰的に Call Hierarchy を辿り、ノードとエッジを `raw` に蓄積する。
+   * ノードを filePath をキーにファイル別グループへまとめる。
+   * `displayName` は basename、`nodeIds` は同じファイルに属するノード ID の配列。
+   *
+   * @param nodes 全ノードの配列
+   * @returns ファイルグループの配列
+   */
+  private static groupByFile(nodes: GraphNode[]): FileGroup[] {
+    const map = new Map<string, GraphNode[]>();
+    for (const n of nodes) {
+      const arr = map.get(n.filePath) ?? [];
+      arr.push(n);
+      map.set(n.filePath, arr);
+    }
+    return Array.from(map.entries()).map(([filePath, ns]) => ({
+      filePath,
+      displayName: VSCodeAPIProvider.basename(filePath),
+      nodeIds: ns.map((n) => n.id),
+    }));
+  }
+
+  /**
+   * パス文字列からファイル名部分（basename）のみを取り出す。
+   * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
+   *
+   * @param p 対象のパス文字列
+   * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
+   */
+  private static basename(p: string): string {
+    const idx = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+    return idx >= 0 ? p.substring(idx + 1) : p;
+  }
+
+  /**
+   * 再帰的に Call Hierarchy を辿り、ノードとエッジを蓄積する。
    *
    * - `visited` で循環参照を抑止
    * - `edgeKeys` で重複エッジを排除
@@ -124,7 +154,8 @@ export class VSCodeAPIProvider {
    * @param itemId `makeNodeId` で生成した `item` のノード ID
    * @param depth 現在の探索深さ（ルート = 0）
    * @param options 探索オプション（方向・最大深さ・引数表示）
-   * @param raw 蓄積先の生データ（破壊的に更新される）
+   * @param nodes 蓄積先のノードマップ（破壊的に更新される）
+   * @param edges 蓄積先のエッジ配列（破壊的に更新される）
    * @param visited 既訪問ノード ID の集合（循環防止用）
    * @param edgeKeys 既登録エッジキー `from->to` の集合（重複防止用）
    */
@@ -133,7 +164,8 @@ export class VSCodeAPIProvider {
     itemId: string,
     depth: number,
     options: CallGraphOptions,
-    raw: RawCallData,
+    nodes: Map<string, GraphNode>,
+    edges: GraphEdge[],
     visited: Set<string>,
     edgeKeys: Set<string>
   ): Promise<void> {
@@ -149,7 +181,7 @@ export class VSCodeAPIProvider {
     if (options.direction === 'outgoing') {
       const outgoing = await vscode.commands.executeCommand<
         vscode.CallHierarchyOutgoingCall[]
-      >('vscode.provideOutgoingCalls', item); // 呼び出す関数をVSCodeから取得
+      >('vscode.provideOutgoingCalls', item);
 
       if (!outgoing) {
         return;
@@ -159,30 +191,22 @@ export class VSCodeAPIProvider {
         const targetItem = call.to;
         const targetId = VSCodeAPIProvider.makeNodeId(targetItem);
 
-        if (!raw.nodes.has(targetId)) {
-          raw.nodes.set(targetId, VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
+        if (!nodes.has(targetId)) {
+          nodes.set(targetId, VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
         }
 
         const edgeKey = `${itemId}->${targetId}`;
         if (!edgeKeys.has(edgeKey)) {
           edgeKeys.add(edgeKey);
-          raw.edges.push({ from: itemId, to: targetId });
+          edges.push({ from: itemId, to: targetId });
         }
 
-        await this.traverse(
-          targetItem,
-          targetId,
-          depth + 1,
-          options,
-          raw,
-          visited,
-          edgeKeys
-        );
+        await this.traverse(targetItem, targetId, depth + 1, options, nodes, edges, visited, edgeKeys);
       }
     } else {
       const incoming = await vscode.commands.executeCommand<
         vscode.CallHierarchyIncomingCall[]
-      >('vscode.provideIncomingCalls', item); // 呼び出し元関数をVSCodeから取得
+      >('vscode.provideIncomingCalls', item);
 
       if (!incoming) {
         return;
@@ -192,26 +216,18 @@ export class VSCodeAPIProvider {
         const callerItem = call.from;
         const callerId = VSCodeAPIProvider.makeNodeId(callerItem);
 
-        if (!raw.nodes.has(callerId)) {
-          raw.nodes.set(callerId, VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
+        if (!nodes.has(callerId)) {
+          nodes.set(callerId, VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
         }
 
         // incoming: caller → callee の方向でエッジを記録
         const edgeKey = `${callerId}->${itemId}`;
         if (!edgeKeys.has(edgeKey)) {
           edgeKeys.add(edgeKey);
-          raw.edges.push({ from: callerId, to: itemId });
+          edges.push({ from: callerId, to: itemId });
         }
 
-        await this.traverse(
-          callerItem,
-          callerId,
-          depth + 1,
-          options,
-          raw,
-          visited,
-          edgeKeys
-        );
+        await this.traverse(callerItem, callerId, depth + 1, options, nodes, edges, visited, edgeKeys);
       }
     }
   }

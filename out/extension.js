@@ -40,17 +40,11 @@ var vscode3 = __toESM(require("vscode"));
 var vscode = __toESM(require("vscode"));
 var VSCodeAPIProvider = class _VSCodeAPIProvider {
   /**
-   * @param transformer 取得した生データを `CallGraphData` に正規化する Transformer
-   */
-  constructor(transformer) {
-    this.transformer = transformer;
-  }
-  /**
    * カーソル位置の関数を起点に Call Hierarchy を再帰探索してコールグラフを構築する。
    *
    * 1. `vscode.prepareCallHierarchy` でルート関数を特定
    * 2. `traverse` で `outgoing` / `incoming` 方向に再帰探索
-   * 3. `transformer.transform` で Webview 用の `CallGraphData` へ正規化
+   * 3. ノード・エッジを `CallGraphData` へ正規化して返す
    *
    * @param document 起点関数が含まれるテキストドキュメント
    * @param position 起点関数のカーソル位置
@@ -67,17 +61,20 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
     }
     const rootItem = rootItems[0];
     const rootId = _VSCodeAPIProvider.makeNodeId(rootItem);
-    const raw = {
-      rootNodeId: rootId,
-      direction: options.direction,
-      nodes: /* @__PURE__ */ new Map(),
-      edges: []
-    };
-    raw.nodes.set(rootId, _VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
+    const nodes = /* @__PURE__ */ new Map();
+    const edges = [];
+    nodes.set(rootId, _VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
     const visited = /* @__PURE__ */ new Set();
     const edgeKeys = /* @__PURE__ */ new Set();
-    await this.traverse(rootItem, rootId, 0, options, raw, visited, edgeKeys);
-    return this.transformer.transform(raw);
+    await this.traverse(rootItem, rootId, 0, options, nodes, edges, visited, edgeKeys);
+    const nodesArray = Array.from(nodes.values());
+    return {
+      rootNodeId: rootId,
+      direction: options.direction,
+      nodes: nodesArray,
+      edges,
+      files: _VSCodeAPIProvider.groupByFile(nodesArray)
+    };
   }
   /**
    * `CallHierarchyItem` からノードの一意な ID を生成する。
@@ -126,7 +123,38 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
     return idx >= 0 ? name.substring(0, idx) : name;
   }
   /**
-   * 再帰的に Call Hierarchy を辿り、ノードとエッジを `raw` に蓄積する。
+   * ノードを filePath をキーにファイル別グループへまとめる。
+   * `displayName` は basename、`nodeIds` は同じファイルに属するノード ID の配列。
+   *
+   * @param nodes 全ノードの配列
+   * @returns ファイルグループの配列
+   */
+  static groupByFile(nodes) {
+    const map = /* @__PURE__ */ new Map();
+    for (const n of nodes) {
+      const arr = map.get(n.filePath) ?? [];
+      arr.push(n);
+      map.set(n.filePath, arr);
+    }
+    return Array.from(map.entries()).map(([filePath, ns]) => ({
+      filePath,
+      displayName: _VSCodeAPIProvider.basename(filePath),
+      nodeIds: ns.map((n) => n.id)
+    }));
+  }
+  /**
+   * パス文字列からファイル名部分（basename）のみを取り出す。
+   * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
+   *
+   * @param p 対象のパス文字列
+   * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
+   */
+  static basename(p) {
+    const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+    return idx >= 0 ? p.substring(idx + 1) : p;
+  }
+  /**
+   * 再帰的に Call Hierarchy を辿り、ノードとエッジを蓄積する。
    *
    * - `visited` で循環参照を抑止
    * - `edgeKeys` で重複エッジを排除
@@ -137,11 +165,12 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
    * @param itemId `makeNodeId` で生成した `item` のノード ID
    * @param depth 現在の探索深さ（ルート = 0）
    * @param options 探索オプション（方向・最大深さ・引数表示）
-   * @param raw 蓄積先の生データ（破壊的に更新される）
+   * @param nodes 蓄積先のノードマップ（破壊的に更新される）
+   * @param edges 蓄積先のエッジ配列（破壊的に更新される）
    * @param visited 既訪問ノード ID の集合（循環防止用）
    * @param edgeKeys 既登録エッジキー `from->to` の集合（重複防止用）
    */
-  async traverse(item, itemId, depth, options, raw, visited, edgeKeys) {
+  async traverse(item, itemId, depth, options, nodes, edges, visited, edgeKeys) {
     if (visited.has(itemId)) {
       return;
     }
@@ -157,23 +186,15 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
       for (const call of outgoing) {
         const targetItem = call.to;
         const targetId = _VSCodeAPIProvider.makeNodeId(targetItem);
-        if (!raw.nodes.has(targetId)) {
-          raw.nodes.set(targetId, _VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
+        if (!nodes.has(targetId)) {
+          nodes.set(targetId, _VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
         }
         const edgeKey = `${itemId}->${targetId}`;
         if (!edgeKeys.has(edgeKey)) {
           edgeKeys.add(edgeKey);
-          raw.edges.push({ from: itemId, to: targetId });
+          edges.push({ from: itemId, to: targetId });
         }
-        await this.traverse(
-          targetItem,
-          targetId,
-          depth + 1,
-          options,
-          raw,
-          visited,
-          edgeKeys
-        );
+        await this.traverse(targetItem, targetId, depth + 1, options, nodes, edges, visited, edgeKeys);
       }
     } else {
       const incoming = await vscode.commands.executeCommand("vscode.provideIncomingCalls", item);
@@ -183,77 +204,17 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
       for (const call of incoming) {
         const callerItem = call.from;
         const callerId = _VSCodeAPIProvider.makeNodeId(callerItem);
-        if (!raw.nodes.has(callerId)) {
-          raw.nodes.set(callerId, _VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
+        if (!nodes.has(callerId)) {
+          nodes.set(callerId, _VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
         }
         const edgeKey = `${callerId}->${itemId}`;
         if (!edgeKeys.has(edgeKey)) {
           edgeKeys.add(edgeKey);
-          raw.edges.push({ from: callerId, to: itemId });
+          edges.push({ from: callerId, to: itemId });
         }
-        await this.traverse(
-          callerItem,
-          callerId,
-          depth + 1,
-          options,
-          raw,
-          visited,
-          edgeKeys
-        );
+        await this.traverse(callerItem, callerId, depth + 1, options, nodes, edges, visited, edgeKeys);
       }
     }
-  }
-};
-
-// src/extension/transformer/GraphDataTransformer.ts
-var GraphDataTransformer = class _GraphDataTransformer {
-  /**
-   * Provider の生データ（`Map` ベース）を Webview 用の `CallGraphData`（配列ベース）に正規化する。
-   * 同時にファイル別のグループ情報 `files` を生成する。
-   *
-   * @param raw Provider が蓄積した生データ
-   * @returns Webview に渡す `CallGraphData`
-   */
-  transform(raw) {
-    const nodes = Array.from(raw.nodes.values());
-    return {
-      rootNodeId: raw.rootNodeId,
-      direction: raw.direction,
-      nodes,
-      edges: raw.edges,
-      files: this.groupByFile(nodes)
-    };
-  }
-  /**
-   * ノードを filePath をキーにファイル別グループへまとめる。
-   * `displayName` は basename、`nodeIds` は同じファイルに属するノード ID の配列。
-   *
-   * @param nodes 全ノードの配列
-   * @returns ファイルグループの配列
-   */
-  groupByFile(nodes) {
-    const map = /* @__PURE__ */ new Map();
-    for (const n of nodes) {
-      const arr = map.get(n.filePath) ?? [];
-      arr.push(n);
-      map.set(n.filePath, arr);
-    }
-    return Array.from(map.entries()).map(([filePath, ns]) => ({
-      filePath,
-      displayName: _GraphDataTransformer.basename(filePath),
-      nodeIds: ns.map((n) => n.id)
-    }));
-  }
-  /**
-   * パス文字列からファイル名部分（basename）のみを取り出す。
-   * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
-   *
-   * @param p 対象のパス文字列
-   * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
-   */
-  static basename(p) {
-    const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
-    return idx >= 0 ? p.substring(idx + 1) : p;
   }
 };
 
@@ -395,12 +356,12 @@ var WebviewPanelManager = class _WebviewPanelManager {
 
 // src/extension/extension.ts
 function activate(context) {
-  const transformer = new GraphDataTransformer();
-  const provider = new VSCodeAPIProvider(transformer);
+  const provider = new VSCodeAPIProvider();
   const panelManager = new WebviewPanelManager(
     context,
     async (message) => {
       await showGraphFromLocation(
+        // webviewからのグラフ描画コールバック登録
         message.filePath,
         message.line,
         message.character,

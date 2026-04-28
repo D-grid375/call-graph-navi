@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { VSCodeAPIProvider } from './providers/VSCodeAPIProvider';
-import { GraphDataTransformer } from './transformer/GraphDataTransformer';
 import { WebviewPanelManager } from './WebviewPanelManager';
 import { CallGraphOptions } from '../shared/types';
 import type { RequestGraphFromNodeMessage } from '../shared/webviewMessages';
@@ -13,12 +12,11 @@ import type { RequestGraphFromNodeMessage } from '../shared/webviewMessages';
  * @param context VS Code から渡される拡張機能コンテキスト（subscriptions に登録したものが自動 dispose される）
  */
 export function activate(context: vscode.ExtensionContext) {
-  const transformer = new GraphDataTransformer();
-  const provider = new VSCodeAPIProvider(transformer);
+  const provider = new VSCodeAPIProvider();
   const panelManager = new WebviewPanelManager(
     context,
     async (message) => {
-      await showGraphFromLocation(
+      await showGraphFromLocation( // webviewからのグラフ描画コールバック登録
         message.filePath,
         message.line,
         message.character,
