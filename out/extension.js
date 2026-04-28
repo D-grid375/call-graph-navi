@@ -286,6 +286,7 @@ var WebviewPanelManager = class _WebviewPanelManager {
     this.panel = vscode2.window.createWebviewPanel(
       _WebviewPanelManager.viewType,
       "Call Graph Navi",
+      // TODO:タブ名改善
       viewStyle,
       {
         enableScripts: true,
@@ -302,18 +303,11 @@ var WebviewPanelManager = class _WebviewPanelManager {
     });
     this.panel.webview.onDidReceiveMessage(async (message2) => {
       if (message2?.type === "nodeClick") {
-        await this.openSource(
-          message2.filePath,
-          message2.line,
-          message2.character
-        );
+        await this.openSource(message2.filePath, message2.line, message2.character);
       } else if (message2?.type === "requestGraphFromNode") {
         await this.onRequestGraphFromNode(message2);
       } else if (message2?.type === "exportPlantUml") {
-        await vscode2.env.clipboard.writeText(message2.text);
-        vscode2.window.showInformationMessage(
-          "PlantUML copied to clipboard."
-        );
+        await this.exportPlantUml(message2.text);
       }
     });
     const message = { type: "updateGraph", data };
@@ -384,6 +378,18 @@ var WebviewPanelManager = class _WebviewPanelManager {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
+  }
+  /**
+   * 指定位置のソースコードをエディタで開き、カーソルを合わせて中央にスクロールする。
+   * Webview で `Shift+クリック` されたときの処理に使われる。
+   *
+   * @param filePath 開きたいファイルの絶対パス
+   * @param line カーソルを合わせる行（0-origin）
+   * @param character カーソルを合わせる桁（0-origin）
+   */
+  async exportPlantUml(umltext) {
+    await vscode2.env.clipboard.writeText(umltext);
+    vscode2.window.showInformationMessage("PlantUML copied to clipboard.");
   }
 };
 
