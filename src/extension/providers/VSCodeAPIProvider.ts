@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { ICallGraphDataProvider } from './ICallGraphDataProvider';
 import { GraphDataTransformer, RawCallData } from '../transformer/GraphDataTransformer';
 import { CallGraphData, CallGraphOptions, GraphNode } from '../../shared/types';
 
@@ -7,7 +6,7 @@ import { CallGraphData, CallGraphOptions, GraphNode } from '../../shared/types';
  * VSCode の Call Hierarchy API を利用したデータプロバイダ。
  * Language Server Protocol の Call Hierarchy をサポートする全ての言語で動作する。
  */
-export class VSCodeAPIProvider implements ICallGraphDataProvider {
+export class VSCodeAPIProvider {
   /**
    * @param transformer 取得した生データを `CallGraphData` に正規化する Transformer
    */
