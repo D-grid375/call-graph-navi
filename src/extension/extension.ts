@@ -27,36 +27,41 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  /**
-   * 指定された document / position を起点にコールグラフを構築して WebviewPanel に表示する。
-   * 設定値（maxDepth, showArguments）を読み出し、進捗通知を出しながら
-   * Provider で取得 → PanelManager で表示、までを一括で行う。
-   *
-   * @param document 起点関数が含まれるテキストドキュメント
-   * @param position 起点関数のカーソル位置
-   * @param direction 'outgoing' = 呼び出し先方向 / 'incoming' = 呼び出し元方向
-   */
-  const buildAndShowGraph = async (
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    direction: 'outgoing' | 'incoming'
-  ) => {
-    const config = vscode.workspace.getConfiguration('CallGraphNavi');
-    const maxDepth = config.get<number>('maxDepth', 0);
-    const showArguments = config.get<boolean>('showArguments', false);
-    const options: CallGraphOptions = { direction, maxDepth, showArguments };
+  // コマンド実行時のエントリ関数登録
+  context.subscriptions.push(
+    vscode.commands.registerCommand('CallGraphNavi.showOutgoing', () =>
+      showGraph('outgoing')
+    ),
+    vscode.commands.registerCommand('CallGraphNavi.showIncoming', () =>
+      showGraph('incoming')
+    )
+  );
 
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: `Building ${direction} call graph...`,
-        cancellable: false,
-      },
-      async () => {
-        const data = await provider.getCallGraph(document, position, options);
-        panelManager.show(data);
-      }
-    );
+  /**
+   * Webview からのコンテキストメニュー操作で、任意のノードを起点に再度コールグラフを再構築するためのエントリ。
+   * 指定ファイルを開き `Position` を作成してから {@link buildAndShowGraph} に委譲する。
+   *
+   * @param filePath 起点関数が含まれるファイルの絶対パス
+   * @param line 起点関数のカーソル行（0-origin）
+   * @param character 起点関数のカーソル桁（0-origin）
+   * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
+   */
+  const showGraphFromLocation = async (
+    filePath: string,
+    line: number,
+    character: number,
+    direction: RequestGraphFromNodeMessage['direction']
+  ) => {
+    try {
+      const uri = vscode.Uri.file(filePath);
+      const document = await vscode.workspace.openTextDocument(uri);
+      const position = new vscode.Position(line, character);
+      await buildAndShowGraph(document, position, direction);
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Call Graph Navi: ${(err as Error).message}`
+      );
+    }
   };
 
   /**
@@ -88,45 +93,40 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   /**
-   * Webview からのコンテキストメニュー操作で、任意のノードを起点に再度コールグラフを再構築するためのエントリ。
-   * 指定ファイルを開き `Position` を作成してから {@link buildAndShowGraph} に委譲する。
+   * 指定された document / position を起点にコールグラフを構築して WebviewPanel に表示する。
+   * 設定値（maxDepth, showArguments）を読み出し、進捗通知を出しながら
+   * Provider で取得 → PanelManager で表示、までを一括で行う。
    *
-   * @param filePath 起点関数が含まれるファイルの絶対パス
-   * @param line 起点関数のカーソル行（0-origin）
-   * @param character 起点関数のカーソル桁（0-origin）
-   * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
+   * @param document 起点関数が含まれるテキストドキュメント
+   * @param position 起点関数のカーソル位置
+   * @param direction 'outgoing' = 呼び出し先方向 / 'incoming' = 呼び出し元方向
    */
-  const showGraphFromLocation = async (
-    filePath: string,
-    line: number,
-    character: number,
-    direction: RequestGraphFromNodeMessage['direction']
+  const buildAndShowGraph = async (
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    direction: 'outgoing' | 'incoming'
   ) => {
-    try {
-      const uri = vscode.Uri.file(filePath);
-      const document = await vscode.workspace.openTextDocument(uri);
-      const position = new vscode.Position(line, character);
-      await buildAndShowGraph(document, position, direction);
-    } catch (err) {
-      vscode.window.showErrorMessage(
-        `Call Graph Navi: ${(err as Error).message}`
-      );
-    }
-  };
+    const config = vscode.workspace.getConfiguration('CallGraphNavi');
+    const maxDepth = config.get<number>('maxDepth', 0);
+    const showArguments = config.get<boolean>('showArguments', false);
+    const options: CallGraphOptions = { direction, maxDepth, showArguments };
 
-  // コマンド実行時のエントリ関数登録
-  context.subscriptions.push(
-    vscode.commands.registerCommand('CallGraphNavi.showOutgoing', () =>
-      showGraph('outgoing')
-    ),
-    vscode.commands.registerCommand('CallGraphNavi.showIncoming', () =>
-      showGraph('incoming')
-    )
-  );
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Building ${direction} call graph...`,
+        cancellable: false,
+      },
+      async () => {
+        const data = await provider.getCallGraph(document, position, options);
+        panelManager.show(data);
+      }
+    );
+  };
 }
 
 /**
  * 拡張機能の無効化時に呼ばれる後片付け関数。
  * 現状特にリソース解放は不要なため no-op。
  */
-export function deactivate() {}
+export function deactivate() { }

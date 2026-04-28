@@ -42,7 +42,7 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
     }
 
     const rootItem = rootItems[0];
-    const rootId = makeNodeId(rootItem);
+    const rootId = VSCodeAPIProvider.makeNodeId(rootItem);
 
     const raw: RawCallData = {
       rootNodeId: rootId,
@@ -50,7 +50,7 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
       nodes: new Map<string, GraphNode>(),
       edges: [],
     };
-    raw.nodes.set(rootId, toGraphNode(rootItem, true, options.showArguments));
+    raw.nodes.set(rootId, VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
 
     const visited = new Set<string>();
     const edgeKeys = new Set<string>();
@@ -58,6 +58,59 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
     await this.traverse(rootItem, rootId, 0, options, raw, visited, edgeKeys);
 
     return this.transformer.transform(raw);
+  }
+
+  /**
+   * `CallHierarchyItem` からノードの一意な ID を生成する。
+   * 形式は `filePath::name::line:character`。
+   * 同名の関数でもファイル・位置が違えば別ノードとして扱えるようにする。
+   *
+   * @param item 対象の `CallHierarchyItem`
+   * @returns 一意なノード ID
+   */
+  private static makeNodeId(item: vscode.CallHierarchyItem): string {
+    return `${item.uri.fsPath}::${item.name}::${item.range.start.line}:${item.range.start.character}`;
+  }
+
+  /**
+   * `CallHierarchyItem` を Webview 用の `GraphNode` に変換する。
+   * `showArguments = false` のときは関数名から引数部を削る。
+   *
+   * @param item 変換対象の `CallHierarchyItem`
+   * @param isRoot ルートノード（ユーザがカーソルを置いた起点関数）なら true
+   * @param showArguments true なら引数付きの関数名をそのまま保持する
+   * @returns 生成された `GraphNode`
+   */
+  private static toGraphNode(
+    item: vscode.CallHierarchyItem,
+    isRoot: boolean,
+    showArguments: boolean
+  ): GraphNode {
+    return {
+      id: VSCodeAPIProvider.makeNodeId(item),
+      name: showArguments ? item.name : VSCodeAPIProvider.stripArguments(item.name),
+      filePath: item.uri.fsPath,
+      line: item.selectionRange.start.line,
+      character: item.selectionRange.start.character,
+      kind: vscode.SymbolKind[item.kind] ?? 'Unknown',
+      isRoot,
+    };
+  }
+
+  /**
+   * 関数名から引数リスト部を取り除く。
+   *
+   * 例: `"funcA(int x, char *y)"` → `"funcA"`
+   *
+   * Call Hierarchy API は言語サーバ次第で関数名に引数リストを含めて返すことがあるため、
+   * 最初の `'('` より前を関数名とみなして切り出す。
+   *
+   * @param name 元の関数名（引数リストを含む可能性がある）
+   * @returns 引数リストを除いた関数名
+   */
+  private static stripArguments(name: string): string {
+    const idx = name.indexOf('(');
+    return idx >= 0 ? name.substring(0, idx) : name;
   }
 
   /**
@@ -105,10 +158,10 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
 
       for (const call of outgoing) {
         const targetItem = call.to;
-        const targetId = makeNodeId(targetItem);
+        const targetId = VSCodeAPIProvider.makeNodeId(targetItem);
 
         if (!raw.nodes.has(targetId)) {
-          raw.nodes.set(targetId, toGraphNode(targetItem, false, options.showArguments));
+          raw.nodes.set(targetId, VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
         }
 
         const edgeKey = `${itemId}->${targetId}`;
@@ -138,10 +191,10 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
 
       for (const call of incoming) {
         const callerItem = call.from;
-        const callerId = makeNodeId(callerItem);
+        const callerId = VSCodeAPIProvider.makeNodeId(callerItem);
 
         if (!raw.nodes.has(callerId)) {
-          raw.nodes.set(callerId, toGraphNode(callerItem, false, options.showArguments));
+          raw.nodes.set(callerId, VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
         }
 
         // incoming: caller → callee の方向でエッジを記録
@@ -163,57 +216,4 @@ export class VSCodeAPIProvider implements ICallGraphDataProvider {
       }
     }
   }
-}
-
-/**
- * `CallHierarchyItem` からノードの一意な ID を生成する。
- * 形式は `filePath::name::line:character`。
- * 同名の関数でもファイル・位置が違えば別ノードとして扱えるようにする。
- *
- * @param item 対象の `CallHierarchyItem`
- * @returns 一意なノード ID
- */
-function makeNodeId(item: vscode.CallHierarchyItem): string {
-  return `${item.uri.fsPath}::${item.name}::${item.range.start.line}:${item.range.start.character}`;
-}
-
-/**
- * `CallHierarchyItem` を Webview 用の `GraphNode` に変換する。
- * `showArguments = false` のときは関数名から引数部を削る。
- *
- * @param item 変換対象の `CallHierarchyItem`
- * @param isRoot ルートノード（ユーザがカーソルを置いた起点関数）なら true
- * @param showArguments true なら引数付きの関数名をそのまま保持する
- * @returns 生成された `GraphNode`
- */
-function toGraphNode(
-  item: vscode.CallHierarchyItem,
-  isRoot: boolean,
-  showArguments: boolean
-): GraphNode {
-  return {
-    id: makeNodeId(item),
-    name: showArguments ? item.name : stripArguments(item.name),
-    filePath: item.uri.fsPath,
-    line: item.selectionRange.start.line,
-    character: item.selectionRange.start.character,
-    kind: vscode.SymbolKind[item.kind] ?? 'Unknown',
-    isRoot,
-  };
-}
-
-/**
- * 関数名から引数リスト部を取り除く。
- *
- * 例: `"funcA(int x, char *y)"` → `"funcA"`
- *
- * Call Hierarchy API は言語サーバ次第で関数名に引数リストを含めて返すことがあるため、
- * 最初の `'('` より前を関数名とみなして切り出す。
- *
- * @param name 元の関数名（引数リストを含む可能性がある）
- * @returns 引数リストを除いた関数名
- */
-function stripArguments(name: string): string {
-  const idx = name.indexOf('(');
-  return idx >= 0 ? name.substring(0, idx) : name;
 }

@@ -48,20 +48,20 @@ export class GraphDataTransformer {
     }
     return Array.from(map.entries()).map(([filePath, ns]) => ({
       filePath,
-      displayName: basename(filePath),
+      displayName: GraphDataTransformer.basename(filePath),
       nodeIds: ns.map((n) => n.id),
     }));
   }
-}
 
-/**
- * パス文字列からファイル名部分（basename）のみを取り出す。
- * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
- *
- * @param p 対象のパス文字列
- * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
- */
-function basename(p: string): string {
-  const idx = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
-  return idx >= 0 ? p.substring(idx + 1) : p;
+  /**
+   * パス文字列からファイル名部分（basename）のみを取り出す。
+   * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
+   *
+   * @param p 対象のパス文字列
+   * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
+   */
+  private static basename(p: string): string {
+    const idx = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+    return idx >= 0 ? p.substring(idx + 1) : p;
+  }
 }

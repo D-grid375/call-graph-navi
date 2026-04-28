@@ -34,7 +34,7 @@ export function exportPlantUmlToClipboard(): void {
  * @param vm 対象 ViewModel
  * @returns `@startuml` / `@enduml` で包まれた PlantUML テキスト
  */
-export function buildPlantUmlText(vm: GraphViewModel): string {
+function buildPlantUmlText(vm: GraphViewModel): string {
   const visibleNodes = vm.nodes.filter((n) => n.view.visibility === 'visible');
   const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
   const visibleEdges = vm.edges.filter(

@@ -38,7 +38,7 @@ var vscode3 = __toESM(require("vscode"));
 
 // src/extension/providers/VSCodeAPIProvider.ts
 var vscode = __toESM(require("vscode"));
-var VSCodeAPIProvider = class {
+var VSCodeAPIProvider = class _VSCodeAPIProvider {
   /**
    * @param transformer 取得した生データを `CallGraphData` に正規化する Transformer
    */
@@ -66,18 +66,64 @@ var VSCodeAPIProvider = class {
       );
     }
     const rootItem = rootItems[0];
-    const rootId = makeNodeId(rootItem);
+    const rootId = _VSCodeAPIProvider.makeNodeId(rootItem);
     const raw = {
       rootNodeId: rootId,
       direction: options.direction,
       nodes: /* @__PURE__ */ new Map(),
       edges: []
     };
-    raw.nodes.set(rootId, toGraphNode(rootItem, true, options.showArguments));
+    raw.nodes.set(rootId, _VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
     const visited = /* @__PURE__ */ new Set();
     const edgeKeys = /* @__PURE__ */ new Set();
     await this.traverse(rootItem, rootId, 0, options, raw, visited, edgeKeys);
     return this.transformer.transform(raw);
+  }
+  /**
+   * `CallHierarchyItem` からノードの一意な ID を生成する。
+   * 形式は `filePath::name::line:character`。
+   * 同名の関数でもファイル・位置が違えば別ノードとして扱えるようにする。
+   *
+   * @param item 対象の `CallHierarchyItem`
+   * @returns 一意なノード ID
+   */
+  static makeNodeId(item) {
+    return `${item.uri.fsPath}::${item.name}::${item.range.start.line}:${item.range.start.character}`;
+  }
+  /**
+   * `CallHierarchyItem` を Webview 用の `GraphNode` に変換する。
+   * `showArguments = false` のときは関数名から引数部を削る。
+   *
+   * @param item 変換対象の `CallHierarchyItem`
+   * @param isRoot ルートノード（ユーザがカーソルを置いた起点関数）なら true
+   * @param showArguments true なら引数付きの関数名をそのまま保持する
+   * @returns 生成された `GraphNode`
+   */
+  static toGraphNode(item, isRoot, showArguments) {
+    return {
+      id: _VSCodeAPIProvider.makeNodeId(item),
+      name: showArguments ? item.name : _VSCodeAPIProvider.stripArguments(item.name),
+      filePath: item.uri.fsPath,
+      line: item.selectionRange.start.line,
+      character: item.selectionRange.start.character,
+      kind: vscode.SymbolKind[item.kind] ?? "Unknown",
+      isRoot
+    };
+  }
+  /**
+   * 関数名から引数リスト部を取り除く。
+   *
+   * 例: `"funcA(int x, char *y)"` → `"funcA"`
+   *
+   * Call Hierarchy API は言語サーバ次第で関数名に引数リストを含めて返すことがあるため、
+   * 最初の `'('` より前を関数名とみなして切り出す。
+   *
+   * @param name 元の関数名（引数リストを含む可能性がある）
+   * @returns 引数リストを除いた関数名
+   */
+  static stripArguments(name) {
+    const idx = name.indexOf("(");
+    return idx >= 0 ? name.substring(0, idx) : name;
   }
   /**
    * 再帰的に Call Hierarchy を辿り、ノードとエッジを `raw` に蓄積する。
@@ -110,9 +156,9 @@ var VSCodeAPIProvider = class {
       }
       for (const call of outgoing) {
         const targetItem = call.to;
-        const targetId = makeNodeId(targetItem);
+        const targetId = _VSCodeAPIProvider.makeNodeId(targetItem);
         if (!raw.nodes.has(targetId)) {
-          raw.nodes.set(targetId, toGraphNode(targetItem, false, options.showArguments));
+          raw.nodes.set(targetId, _VSCodeAPIProvider.toGraphNode(targetItem, false, options.showArguments));
         }
         const edgeKey = `${itemId}->${targetId}`;
         if (!edgeKeys.has(edgeKey)) {
@@ -136,9 +182,9 @@ var VSCodeAPIProvider = class {
       }
       for (const call of incoming) {
         const callerItem = call.from;
-        const callerId = makeNodeId(callerItem);
+        const callerId = _VSCodeAPIProvider.makeNodeId(callerItem);
         if (!raw.nodes.has(callerId)) {
-          raw.nodes.set(callerId, toGraphNode(callerItem, false, options.showArguments));
+          raw.nodes.set(callerId, _VSCodeAPIProvider.toGraphNode(callerItem, false, options.showArguments));
         }
         const edgeKey = `${callerId}->${itemId}`;
         if (!edgeKeys.has(edgeKey)) {
@@ -158,27 +204,9 @@ var VSCodeAPIProvider = class {
     }
   }
 };
-function makeNodeId(item) {
-  return `${item.uri.fsPath}::${item.name}::${item.range.start.line}:${item.range.start.character}`;
-}
-function toGraphNode(item, isRoot, showArguments) {
-  return {
-    id: makeNodeId(item),
-    name: showArguments ? item.name : stripArguments(item.name),
-    filePath: item.uri.fsPath,
-    line: item.selectionRange.start.line,
-    character: item.selectionRange.start.character,
-    kind: vscode.SymbolKind[item.kind] ?? "Unknown",
-    isRoot
-  };
-}
-function stripArguments(name) {
-  const idx = name.indexOf("(");
-  return idx >= 0 ? name.substring(0, idx) : name;
-}
 
 // src/extension/transformer/GraphDataTransformer.ts
-var GraphDataTransformer = class {
+var GraphDataTransformer = class _GraphDataTransformer {
   /**
    * Provider の生データ（`Map` ベース）を Webview 用の `CallGraphData`（配列ベース）に正規化する。
    * 同時にファイル別のグループ情報 `files` を生成する。
@@ -212,15 +240,22 @@ var GraphDataTransformer = class {
     }
     return Array.from(map.entries()).map(([filePath, ns]) => ({
       filePath,
-      displayName: basename(filePath),
+      displayName: _GraphDataTransformer.basename(filePath),
       nodeIds: ns.map((n) => n.id)
     }));
   }
+  /**
+   * パス文字列からファイル名部分（basename）のみを取り出す。
+   * `/` と `\` の両方に対応するのでクロスプラットフォームで動作する。
+   *
+   * @param p 対象のパス文字列
+   * @returns 最後のセパレータ以降の部分。セパレータが無い場合は入力そのまま
+   */
+  static basename(p) {
+    const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+    return idx >= 0 ? p.substring(idx + 1) : p;
+  }
 };
-function basename(p) {
-  const idx = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
-  return idx >= 0 ? p.substring(idx + 1) : p;
-}
 
 // src/extension/WebviewPanelManager.ts
 var vscode2 = __toESM(require("vscode"));
@@ -332,19 +367,25 @@ var WebviewPanelManager = class _WebviewPanelManager {
     const jsUri = webview.asWebviewUri(
       vscode2.Uri.file(path.join(mediaPath, "graph.js"))
     );
-    const nonce = getNonce();
+    const nonce = _WebviewPanelManager.getNonce();
     html = html.replace(/{{cspSource}}/g, webview.cspSource).replace(/{{nonce}}/g, nonce).replace(/{{cssUri}}/g, cssUri.toString()).replace(/{{dagreUri}}/g, dagreUri.toString()).replace(/{{jsUri}}/g, jsUri.toString());
     return html;
   }
-};
-function getNonce() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  /**
+   * CSP で使うランダムな nonce 文字列（英数 32 文字）を生成する。
+   * Webview にロードされるインラインスクリプトの許可に使う。
+   *
+   * @returns 長さ 32 のランダム英数文字列
+   */
+  static getNonce() {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
   }
-  return text;
-}
+};
 
 // src/extension/extension.ts
 function activate(context) {
@@ -361,22 +402,27 @@ function activate(context) {
       );
     }
   );
-  const buildAndShowGraph = async (document, position, direction) => {
-    const config = vscode3.workspace.getConfiguration("CallGraphNavi");
-    const maxDepth = config.get("maxDepth", 0);
-    const showArguments = config.get("showArguments", false);
-    const options = { direction, maxDepth, showArguments };
-    await vscode3.window.withProgress(
-      {
-        location: vscode3.ProgressLocation.Notification,
-        title: `Building ${direction} call graph...`,
-        cancellable: false
-      },
-      async () => {
-        const data = await provider.getCallGraph(document, position, options);
-        panelManager.show(data);
-      }
-    );
+  context.subscriptions.push(
+    vscode3.commands.registerCommand(
+      "CallGraphNavi.showOutgoing",
+      () => showGraph("outgoing")
+    ),
+    vscode3.commands.registerCommand(
+      "CallGraphNavi.showIncoming",
+      () => showGraph("incoming")
+    )
+  );
+  const showGraphFromLocation = async (filePath, line, character, direction) => {
+    try {
+      const uri = vscode3.Uri.file(filePath);
+      const document = await vscode3.workspace.openTextDocument(uri);
+      const position = new vscode3.Position(line, character);
+      await buildAndShowGraph(document, position, direction);
+    } catch (err) {
+      vscode3.window.showErrorMessage(
+        `Call Graph Navi: ${err.message}`
+      );
+    }
   };
   const showGraph = async (direction) => {
     const editor = vscode3.window.activeTextEditor;
@@ -396,28 +442,23 @@ function activate(context) {
       );
     }
   };
-  const showGraphFromLocation = async (filePath, line, character, direction) => {
-    try {
-      const uri = vscode3.Uri.file(filePath);
-      const document = await vscode3.workspace.openTextDocument(uri);
-      const position = new vscode3.Position(line, character);
-      await buildAndShowGraph(document, position, direction);
-    } catch (err) {
-      vscode3.window.showErrorMessage(
-        `Call Graph Navi: ${err.message}`
-      );
-    }
+  const buildAndShowGraph = async (document, position, direction) => {
+    const config = vscode3.workspace.getConfiguration("CallGraphNavi");
+    const maxDepth = config.get("maxDepth", 0);
+    const showArguments = config.get("showArguments", false);
+    const options = { direction, maxDepth, showArguments };
+    await vscode3.window.withProgress(
+      {
+        location: vscode3.ProgressLocation.Notification,
+        title: `Building ${direction} call graph...`,
+        cancellable: false
+      },
+      async () => {
+        const data = await provider.getCallGraph(document, position, options);
+        panelManager.show(data);
+      }
+    );
   };
-  context.subscriptions.push(
-    vscode3.commands.registerCommand(
-      "CallGraphNavi.showOutgoing",
-      () => showGraph("outgoing")
-    ),
-    vscode3.commands.registerCommand(
-      "CallGraphNavi.showIncoming",
-      () => showGraph("incoming")
-    )
-  );
 }
 function deactivate() {
 }

@@ -128,7 +128,7 @@ export class WebviewPanelManager {
     const jsUri = webview.asWebviewUri(
       vscode.Uri.file(path.join(mediaPath, 'graph.js'))
     );
-    const nonce = getNonce();
+    const nonce = WebviewPanelManager.getNonce();
 
     html = html
       .replace(/{{cspSource}}/g, webview.cspSource)
@@ -139,20 +139,20 @@ export class WebviewPanelManager {
 
     return html;
   }
-}
 
-/**
- * CSP で使うランダムな nonce 文字列（英数 32 文字）を生成する。
- * Webview にロードされるインラインスクリプトの許可に使う。
- *
- * @returns 長さ 32 のランダム英数文字列
- */
-function getNonce(): string {
-  let text = '';
-  const possible =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  /**
+   * CSP で使うランダムな nonce 文字列（英数 32 文字）を生成する。
+   * Webview にロードされるインラインスクリプトの許可に使う。
+   *
+   * @returns 長さ 32 のランダム英数文字列
+   */
+  private static getNonce(): string {
+    let text = '';
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
   }
-  return text;
 }

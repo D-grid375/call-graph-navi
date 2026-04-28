@@ -56,7 +56,7 @@ export function pruneUnreachableFromRoot(vm: GraphViewModel): void {
  * @param vm 対象 ViewModel
  * @returns ルートから到達可能なノード ID の集合
  */
-export function collectReachableFromRoot(vm: GraphViewModel): Set<string> {
+function collectReachableFromRoot(vm: GraphViewModel): Set<string> {
   const visibleNodeIds = new Set(
     vm.nodes
       .filter((node) => node.view.visibility === 'visible')
@@ -83,7 +83,7 @@ export function collectReachableFromRoot(vm: GraphViewModel): Set<string> {
  * @param direction `'forward'` なら `from -> to`、`'reverse'` なら `to -> from` の向きで構築
  * @returns 隣接リストマップ
  */
-export function buildAdjacencyMap(
+function buildAdjacencyMap(
   edges: EdgeVM[],
   direction: 'forward' | 'reverse'
 ): Map<string, string[]> {
