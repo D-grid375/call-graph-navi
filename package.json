@@ -76,6 +76,16 @@
           "type": "boolean",
           "default": false,
           "description": "Show function arguments in node labels (e.g. funcA(int x) vs funcA)"
+        },
+        "CallGraphNavi.graphOrientation": {
+          "type": "string",
+          "enum": ["TB", "LR"],
+          "enumDescriptions": [
+            "TB: Top to Bottom (Vertical)",
+            "LR: Left to Right (Horizontal)"
+          ],
+          "default": "TB",
+          "description": "Specifies the orientation of the graph\nTB: Top to Bottom (Vertical)\nLR: Left to Right (Horizontal)"
         }
       }
     }

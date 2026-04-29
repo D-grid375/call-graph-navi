@@ -31,11 +31,13 @@
   var uiState = { mode: "normal" };
   var layoutPositions = /* @__PURE__ */ new Map();
   var searchState = { query: "", hitIds: [], currentIndex: -1 };
+  var currentOptions;
   function persistState() {
     const snapshot = {
       viewModel: currentGraphViewModel,
       transform: currentTransform,
-      uiState: { ...uiState }
+      uiState: { ...uiState },
+      options: currentOptions
     };
     vscode.setState(snapshot);
   }
@@ -47,6 +49,7 @@
     currentGraphViewModel = snapshot.viewModel;
     currentTransform = snapshot.transform;
     uiState.mode = snapshot.uiState.mode;
+    currentOptions = snapshot.options;
     return true;
   }
   function getViewModel() {
@@ -80,6 +83,20 @@
   }
   function clearSearchState() {
     searchState = { query: "", hitIds: [], currentIndex: -1 };
+  }
+  function updateExtensionOptions(options) {
+    currentOptions = options;
+  }
+  function getExtensionOptions() {
+    return currentOptions;
+  }
+  function getGraphsOrientation() {
+    const option = getExtensionOptions().graphsOrientation;
+    if (option != null) {
+      return option;
+    } else {
+      return "TB";
+    }
   }
 
   // src/WebviewController/core/util.ts
@@ -219,8 +236,9 @@
       return;
     }
     const graph = new dagre.graphlib.Graph({ compound: true });
+    const graphsOrientation = getGraphsOrientation();
     graph.setGraph({
-      rankdir: "TB",
+      rankdir: graphsOrientation,
       nodesep: 30,
       ranksep: 60,
       marginx: PADDING,
@@ -1111,9 +1129,9 @@ Click: open source`;
     applyTransform();
   }
   window.addEventListener("message", (event) => {
-    const msg = event.data;
-    if (msg && msg.type === "updateGraph") {
-      setViewModel(createGraphViewModel(msg.data));
+    if (event.data && event.data.type === "updateGraph") {
+      updateExtensionOptions(event.data.extensionOptions);
+      setViewModel(createGraphViewModel(event.data.graphData));
       hideNodeContextMenu();
       renderGraph(true);
     }

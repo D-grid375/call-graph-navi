@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { CallGraphData, CallGraphOptions, FileGroup, GraphEdge, GraphNode } from './shared/types';
+import { CallGraphData, ExtensionOptions, FileGroup, GraphEdge, GraphNode } from './shared/types';
 
 /**
  * VSCode の Call Hierarchy API を利用したデータプロバイダ。
@@ -27,7 +27,7 @@ export class VSCodeAPIProvider {
   async getCallGraphData(
     document: vscode.TextDocument,
     position: vscode.Position,
-    options: CallGraphOptions
+    options: ExtensionOptions
   ): Promise<CallGraphData> {
     // ルートノード取得
     const rootItems = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>
@@ -166,7 +166,7 @@ export class VSCodeAPIProvider {
     item: vscode.CallHierarchyItem,
     itemId: string,
     depth: number,
-    options: CallGraphOptions,
+    options: ExtensionOptions,
     nodes: Map<string, GraphNode>,
     edges: GraphEdge[],
     visited: Set<string>,

@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { CallGraphData } from './shared/types';
+import { ExtensionOptions } from './shared/types';
 import {
   RequestGraphFromNodeMessage,
   UpdateGraphMessage,
@@ -31,13 +32,13 @@ export class WebviewManager {
   ) { }
 
   /**
-   * コールグラフを WebviewPanel に表示する。
+   * WebviewPanelを新規作成しグラフ描画を要求する。
    * パネルが未生成なら新規作成し、既存パネルがあれば再利用して reveal する。
    * 毎回 `updateGraph` メッセージを postMessage してグラフを差し替える。
    *
    * @param data 表示する `CallGraphData`
    */
-  updateWebview(data: CallGraphData): void {
+  updateWebview(graphData: CallGraphData, extensionOptions: ExtensionOptions): void {
     // パネル初期化
     const viewStyle = this.panel ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside; // パネル新規作成の場合はタブを右にスプリット、既存パネルがあればその隣にタブを開く
     this.panel = vscode.window.createWebviewPanel(
@@ -67,9 +68,9 @@ export class WebviewManager {
       }
     });
 
-    // webviewにグラフデータを渡して描画要求
-    const message: UpdateGraphMessage = { type: 'updateGraph', data };
-    this.panel.webview.postMessage(message);
+    // webviewにグラフデータと拡張機能設定値を渡して描画要求
+    const updateGraphMessage: UpdateGraphMessage = { type: 'updateGraph', graphData, extensionOptions };
+    this.panel.webview.postMessage(updateGraphMessage);
   }
 
   /**

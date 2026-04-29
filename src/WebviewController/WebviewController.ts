@@ -17,6 +17,7 @@ import {
   svg,
   viewport,
 } from './core/dom';
+import { updateExtensionOptions } from './core/state';
 import {
   exportPlantUml,
   hideAllNodes,
@@ -60,13 +61,14 @@ if (restoreState()) {
   applyTransform();
 }
 
-// グラフ描画イベント
+// WebviewManagerからのイベント受信
 window.addEventListener('message', (event) => {
-  const msg = event.data;
-  if (msg && msg.type === 'updateGraph') {
-    setViewModel(createGraphViewModel(msg.data)); // 生データからViewModelを生成
-    hideNodeContextMenu();                        // 前の画面で開いていたノードのコンテキストメニューが残っている可能性があるので閉じる
-    renderGraph(true);                            // ViewModelからグラフ描画
+  // グラフ描画イベント
+  if (event.data && event.data.type === 'updateGraph') {
+    updateExtensionOptions(event.data.extensionOptions);       // 拡張機能設定値更新：グラフ描画に設定値を参照するため先にコール必要
+    setViewModel(createGraphViewModel(event.data.graphData));  // 生データからViewModelを生成
+    hideNodeContextMenu();                                     // 前の画面で開いていたノードのコンテキストメニューが残っている可能性があるので閉じる
+    renderGraph(true);                                         // ViewModelからグラフ描画
   }
 });
 

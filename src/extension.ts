@@ -15,7 +15,7 @@
 import * as vscode from 'vscode';
 import { VSCodeAPIProvider } from './VSCodeAPIProvider';
 import { WebviewManager } from './WebviewManager';
-import { CallGraphOptions } from './shared/types';
+import { ExtensionOptions } from './shared/types';
 import type { RequestGraphFromNodeMessage } from './shared/webviewMessages';
 
 /**
@@ -118,10 +118,12 @@ export function activate(context: vscode.ExtensionContext) {
     position: vscode.Position,
     direction: 'outgoing' | 'incoming'
   ) => {
+    // 拡張機能オプションを取得　Webviewに渡すため全オプションをここで取得する
     const config = vscode.workspace.getConfiguration('CallGraphNavi');
     const maxDepth = config.get<number>('maxDepth', 0);
     const showArguments = config.get<boolean>('showArguments', false);
-    const options: CallGraphOptions = { direction, maxDepth, showArguments };
+    const graphsOrientation = config.get<string>('graphOrientation', "Vertical");
+    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphsOrientation };
 
     await vscode.window.withProgress(
       {
@@ -133,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
         // グラフデータ取得
         const data = await provider.getCallGraphData(document, position, options);
         // データをManagerに渡してグラフ更新
-        webviewManager.updateWebview(data);
+        webviewManager.updateWebview(data, options);
       }
     );
   };

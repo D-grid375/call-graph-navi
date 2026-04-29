@@ -233,13 +233,13 @@ var WebviewManager = class _WebviewManager {
     this.viewType = "CallGraphNavi.graph";
   }
   /**
-   * コールグラフを WebviewPanel に表示する。
+   * WebviewPanelを新規作成しグラフ描画を要求する。
    * パネルが未生成なら新規作成し、既存パネルがあれば再利用して reveal する。
    * 毎回 `updateGraph` メッセージを postMessage してグラフを差し替える。
    *
    * @param data 表示する `CallGraphData`
    */
-  updateWebview(data) {
+  updateWebview(graphData, extensionOptions) {
     const viewStyle = this.panel ? vscode2.ViewColumn.Active : vscode2.ViewColumn.Beside;
     this.panel = vscode2.window.createWebviewPanel(
       _WebviewManager.viewType,
@@ -259,17 +259,17 @@ var WebviewManager = class _WebviewManager {
     this.panel.onDidDispose(() => {
       this.panel = void 0;
     });
-    this.panel.webview.onDidReceiveMessage(async (message2) => {
-      if (message2?.type === "requestGraphFromNode") {
-        await this.onRequestGraphFromNode(message2);
-      } else if (message2?.type === "nodeClick") {
-        await this.openSource(message2.filePath, message2.line, message2.character);
-      } else if (message2?.type === "exportPlantUml") {
-        await this.exportPlantUml(message2.text);
+    this.panel.webview.onDidReceiveMessage(async (message) => {
+      if (message?.type === "requestGraphFromNode") {
+        await this.onRequestGraphFromNode(message);
+      } else if (message?.type === "nodeClick") {
+        await this.openSource(message.filePath, message.line, message.character);
+      } else if (message?.type === "exportPlantUml") {
+        await this.exportPlantUml(message.text);
       }
     });
-    const message = { type: "updateGraph", data };
-    this.panel.webview.postMessage(message);
+    const updateGraphMessage = { type: "updateGraph", graphData, extensionOptions };
+    this.panel.webview.postMessage(updateGraphMessage);
   }
   /**
    * Webviewからのコールバック処理：エディタ上での指定箇所の表示
@@ -408,7 +408,8 @@ function activate(context) {
     const config = vscode3.workspace.getConfiguration("CallGraphNavi");
     const maxDepth = config.get("maxDepth", 0);
     const showArguments = config.get("showArguments", false);
-    const options = { direction, maxDepth, showArguments };
+    const graphsOrientation = config.get("graphOrientation", "Vertical");
+    const options = { direction, maxDepth, showArguments, graphsOrientation };
     await vscode3.window.withProgress(
       {
         location: vscode3.ProgressLocation.Notification,
@@ -417,7 +418,7 @@ function activate(context) {
       },
       async () => {
         const data = await provider.getCallGraphData(document, position, options);
-        webviewManager.updateWebview(data);
+        webviewManager.updateWebview(data, options);
       }
     );
   };

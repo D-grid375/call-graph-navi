@@ -1,16 +1,19 @@
 import { vscode } from './dom';
 import type { GraphViewModel, SearchState, Transform, UiState } from './types';
+import { ExtensionOptions } from '../../shared/types';
 
 let currentGraphViewModel: GraphViewModel | null = null;
 let currentTransform: Transform = { x: 0, y: 0, scale: 1 };
 const uiState: UiState = { mode: 'normal' };
 let layoutPositions: Map<string, { x: number; y: number }> = new Map();
 let searchState: SearchState = { query: '', hitIds: [], currentIndex: -1 };
+let currentOptions: ExtensionOptions;
 
 interface PersistedState {
   viewModel: GraphViewModel | null;
   transform: Transform;
   uiState: UiState;
+  options: ExtensionOptions;
 }
 
 /**
@@ -23,6 +26,7 @@ export function persistState(): void {
     viewModel: currentGraphViewModel,
     transform: currentTransform,
     uiState: { ...uiState },
+    options: currentOptions
   };
   vscode.setState(snapshot);
 }
@@ -41,6 +45,7 @@ export function restoreState(): boolean {
   currentGraphViewModel = snapshot.viewModel;
   currentTransform = snapshot.transform;
   uiState.mode = snapshot.uiState.mode;
+  currentOptions = snapshot.options;
   return true;
 }
 
@@ -141,4 +146,33 @@ export function setSearchState(state: SearchState): void {
  */
 export function clearSearchState(): void {
   searchState = { query: '', hitIds: [], currentIndex: -1 };
+}
+
+/**
+ * Managerから取得した拡張設定で内部設定を更新する
+ */
+export function updateExtensionOptions(options: ExtensionOptions): void {
+  currentOptions = options;
+}
+
+/**
+ * 現在の内部設定を返す
+ */
+export function getExtensionOptions(): ExtensionOptions {
+  return currentOptions;
+}
+
+/**
+ * グラフ方向設定を返す
+ */
+export function getGraphsOrientation(): string {
+  // 現在設定値取得
+  const option = getExtensionOptions().graphsOrientation;
+
+  // 一応Nullチェックしてから返す
+  if (option != null) {
+    return option;
+  } else {
+    return 'TB'; // Nullの時はデフォルト値
+  }
 }

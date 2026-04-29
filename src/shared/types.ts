@@ -32,8 +32,9 @@ export interface FileGroup {
 }
 
 /** 探索オプション */
-export interface CallGraphOptions {
+export interface ExtensionOptions {
   direction: 'outgoing' | 'incoming';
   maxDepth: number; // 0 = 無制限
   showArguments: boolean;
+  graphsOrientation: string;
 }

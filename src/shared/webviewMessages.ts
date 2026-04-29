@@ -1,10 +1,12 @@
 import type { CallGraphData } from './types';
+import { ExtensionOptions } from './types';
 
 export type GraphDirection = CallGraphData['direction'];
 
 export interface UpdateGraphMessage {
   type: 'updateGraph';
-  data: CallGraphData;
+  graphData: CallGraphData;
+  extensionOptions: ExtensionOptions;
 }
 
 export interface NodeClickMessage {
