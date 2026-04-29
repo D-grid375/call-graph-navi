@@ -268,6 +268,8 @@ var WebviewManager = class _WebviewManager {
         await this.exportPlantUml(message.text);
       } else if (message?.type === "exportSvg") {
         await this.exportSvg(message.svgText);
+      } else if (message?.type === "exportPng") {
+        await this.exportPng(message.pngDataUrl);
       }
     });
     const updateGraphMessage = { type: "updateGraph", graphData, extensionOptions };
@@ -301,6 +303,23 @@ var WebviewManager = class _WebviewManager {
         `Failed to open ${filePath}: ${err.message}`
       );
     }
+  }
+  async exportPng(pngDataUrl) {
+    const uri = await vscode2.window.showSaveDialog({
+      filters: { "PNG Image": ["png"] },
+      defaultUri: vscode2.Uri.file("call-graph.png")
+    });
+    if (!uri) {
+      return;
+    }
+    const base64 = pngDataUrl.replace(/^data:image\/png;base64,/, "");
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    await vscode2.workspace.fs.writeFile(uri, bytes);
+    vscode2.window.showInformationMessage("PNG exported.");
   }
   async exportSvg(svgText) {
     const uri = await vscode2.window.showSaveDialog({

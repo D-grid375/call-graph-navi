@@ -6,6 +6,7 @@
 import {
   btnExportPlantUml,
   btnExportSvg,
+  btnExportPng,
   btnHideAll,
   btnReset,
   btnSearchNext,
@@ -25,6 +26,7 @@ import {
   showAllNodes,
 } from './feature/buttonActions';
 import { exportSvgToFile } from './feature/exportSvg';
+import { exportPngToFile } from './feature/exportPng';
 import {
   handleViewportClick,
   handleViewportContextMenu,
@@ -80,6 +82,7 @@ btnShowAll.addEventListener('click', showAllNodes);
 btnHideAll.addEventListener('click', hideAllNodes);
 btnExportPlantUml.addEventListener('click', exportPlantUml);
 btnExportSvg.addEventListener('click', exportSvgToFile);
+btnExportPng.addEventListener('click', exportPngToFile);
 
 // 検索UIイベント
 searchInput.addEventListener('keydown', handleSearchInputKeyDown);

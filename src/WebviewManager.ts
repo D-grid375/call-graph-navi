@@ -67,6 +67,8 @@ export class WebviewManager {
         await this.exportPlantUml(message.text);
       } else if (message?.type === 'exportSvg') {
         await this.exportSvg(message.svgText);
+      } else if (message?.type === 'exportPng') {
+        await this.exportPng(message.pngDataUrl);
       }
     });
 
@@ -103,6 +105,24 @@ export class WebviewManager {
         `Failed to open ${filePath}: ${(err as Error).message}`
       );
     }
+  }
+
+  private async exportPng(pngDataUrl: string): Promise<void> {
+    const uri = await vscode.window.showSaveDialog({
+      filters: { 'PNG Image': ['png'] },
+      defaultUri: vscode.Uri.file('call-graph.png'),
+    });
+    if (!uri) {
+      return;
+    }
+    const base64 = pngDataUrl.replace(/^data:image\/png;base64,/, '');
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    await vscode.workspace.fs.writeFile(uri, bytes);
+    vscode.window.showInformationMessage('PNG exported.');
   }
 
   private async exportSvg(svgText: string): Promise<void> {

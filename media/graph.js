@@ -21,6 +21,7 @@
   var btnHideAll = document.getElementById("btn-hide-all");
   var btnExportPlantUml = document.getElementById("btn-export-plantuml");
   var btnExportSvg = document.getElementById("btn-export-svg");
+  var btnExportPng = document.getElementById("btn-export-png");
   var searchInput = document.getElementById("search-input");
   var btnSearchPrev = document.getElementById("btn-search-prev");
   var btnSearchNext = document.getElementById("btn-search-next");
@@ -618,6 +619,71 @@ Click: open source`;
     cloned.setAttribute("viewBox", `0 0 ${width} ${height}`);
   }
 
+  // src/WebviewController/feature/exportPng.ts
+  function exportPngToFile() {
+    const cloned = svg.cloneNode(true);
+    inlineStyles2(cloned);
+    const { width, height } = svg.getBoundingClientRect();
+    cloned.setAttribute("width", String(width));
+    cloned.setAttribute("height", String(height));
+    cloned.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    const serializer = new XMLSerializer();
+    const svgText = serializer.serializeToString(cloned);
+    const svgDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const pngDataUrl = canvas.toDataURL("image/png");
+      vscode.postMessage({ type: "exportPng", pngDataUrl });
+    };
+    img.onerror = (e) => {
+      console.error("PNG export failed: image load error", e);
+    };
+    img.src = svgDataUrl;
+  }
+  function inlineStyles2(cloned) {
+    const clonedEls = cloned.querySelectorAll("*");
+    const originalEls = svg.querySelectorAll("*");
+    const RECT_PROPS = ["fill", "stroke", "strokeWidth"];
+    const TEXT_PROPS = ["fill", "fontSize", "fontFamily", "fontWeight"];
+    const PATH_PROPS = ["fill", "stroke", "strokeWidth"];
+    for (let i = 0; i < clonedEls.length; i++) {
+      const clonedEl = clonedEls[i];
+      const originalEl = originalEls[i];
+      if (!originalEl) {
+        continue;
+      }
+      const tag = clonedEl.tagName.toLowerCase();
+      let props;
+      if (tag === "rect") {
+        props = RECT_PROPS;
+      } else if (tag === "text") {
+        props = TEXT_PROPS;
+      } else if (tag === "path") {
+        props = PATH_PROPS;
+      } else {
+        continue;
+      }
+      const computed = getComputedStyle(originalEl);
+      for (const prop of props) {
+        const value = computed[prop];
+        if (value) {
+          clonedEl.style[prop] = value;
+        }
+      }
+    }
+    const markerPath = cloned.querySelector("marker path");
+    const originalMarkerPath = svg.querySelector("marker path");
+    if (markerPath && originalMarkerPath) {
+      const computed = getComputedStyle(originalMarkerPath);
+      markerPath.style.fill = computed.fill;
+    }
+  }
+
   // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
   function hideNodes(vm, nodeIds) {
     for (const node of vm.nodes) {
@@ -1196,6 +1262,7 @@ Click: open source`;
   btnHideAll.addEventListener("click", hideAllNodes);
   btnExportPlantUml.addEventListener("click", exportPlantUml);
   btnExportSvg.addEventListener("click", exportSvgToFile);
+  btnExportPng.addEventListener("click", exportPngToFile);
   searchInput.addEventListener("keydown", handleSearchInputKeyDown);
   btnSearchNext.addEventListener("click", handleSearchNextClick);
   btnSearchPrev.addEventListener("click", handleSearchPrevClick);

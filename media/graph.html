@@ -7,7 +7,7 @@
              style-src {{cspSource}} 'unsafe-inline';
              script-src 'nonce-{{nonce}}';
              font-src {{cspSource}};
-             img-src {{cspSource}};" />
+             img-src {{cspSource}} data:;" />
   <link rel="stylesheet" href="{{cssUri}}" />
   <title>Call Graph Navi</title>
 </head>
@@ -18,6 +18,7 @@
     <button id="btn-show-all">Unhide All Nodes</button>
     <button id="btn-export-plantuml">Export PlantUML</button>
     <button id="btn-export-svg">Export SVG</button>
+    <button id="btn-export-png">Export PNG</button>
     <span class="spacer"></span>
     <span id="search-box">
       <span class="search-input-wrap">
