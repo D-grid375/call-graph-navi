@@ -165,9 +165,9 @@ export function getExtensionOptions(): ExtensionOptions {
 /**
  * グラフ方向設定を返す
  */
-export function getGraphsOrientation(): string {
+export function getGraphOrientation(): string {
   // 現在設定値取得
-  const option = getExtensionOptions().graphsOrientation;
+  const option = getExtensionOptions().graphOrientation;
 
   // 一応Nullチェックしてから返す
   if (option != null) {

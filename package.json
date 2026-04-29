@@ -2,7 +2,7 @@
   "name": "call-graph-navi",
   "displayName": "Call Graph Navi",
   "description": "Visualize and explore call graphs interactively in VS Code",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "publisher": "D-grid375",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -85,7 +85,7 @@
             "LR: Left to Right (Horizontal)"
           ],
           "default": "TB",
-          "description": "Specifies the orientation of the graph\nTB: Top to Bottom (Vertical)\nLR: Left to Right (Horizontal)"
+          "description": "Specifies the orientation of the graph\n- TB: Top to Bottom (Vertical)\n- LR: Left to Right (Horizontal)"
         }
       }
     }

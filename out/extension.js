@@ -408,8 +408,8 @@ function activate(context) {
     const config = vscode3.workspace.getConfiguration("CallGraphNavi");
     const maxDepth = config.get("maxDepth", 0);
     const showArguments = config.get("showArguments", false);
-    const graphsOrientation = config.get("graphOrientation", "Vertical");
-    const options = { direction, maxDepth, showArguments, graphsOrientation };
+    const graphOrientation = config.get("graphOrientation", "Vertical");
+    const options = { direction, maxDepth, showArguments, graphOrientation };
     await vscode3.window.withProgress(
       {
         location: vscode3.ProgressLocation.Notification,

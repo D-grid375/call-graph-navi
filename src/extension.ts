@@ -122,8 +122,8 @@ export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('CallGraphNavi');
     const maxDepth = config.get<number>('maxDepth', 0);
     const showArguments = config.get<boolean>('showArguments', false);
-    const graphsOrientation = config.get<string>('graphOrientation', "Vertical");
-    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphsOrientation };
+    const graphOrientation = config.get<string>('graphOrientation', "Vertical");
+    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphOrientation: graphOrientation };
 
     await vscode.window.withProgress(
       {

@@ -90,8 +90,8 @@
   function getExtensionOptions() {
     return currentOptions;
   }
-  function getGraphsOrientation() {
-    const option = getExtensionOptions().graphsOrientation;
+  function getGraphOrientation() {
+    const option = getExtensionOptions().graphOrientation;
     if (option != null) {
       return option;
     } else {
@@ -236,9 +236,9 @@
       return;
     }
     const graph = new dagre.graphlib.Graph({ compound: true });
-    const graphsOrientation = getGraphsOrientation();
+    const graphOrientation = getGraphOrientation();
     graph.setGraph({
-      rankdir: graphsOrientation,
+      rankdir: graphOrientation,
       nodesep: 30,
       ranksep: 60,
       marginx: PADDING,
@@ -472,6 +472,11 @@ Click: open source`;
       nodesByFile.set(node.filePath, arr);
     }
     const lines = ["@startuml"];
+    const graphOrientation = getGraphOrientation();
+    if (graphOrientation == "TB") {
+    } else if (graphOrientation == "LR") {
+      lines.push("left to right direction");
+    }
     let packageIndex = 1;
     for (const file of vm.files) {
       const nodes = nodesByFile.get(file.filePath);

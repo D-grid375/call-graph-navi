@@ -1,5 +1,5 @@
 import { vscode } from '../core/dom';
-import { getViewModel } from '../core/state';
+import { getViewModel, getGraphOrientation } from '../core/state';
 import type { GraphViewModel, NodeVM } from '../core/types';
 
 /**
@@ -57,6 +57,13 @@ function buildPlantUmlText(vm: GraphViewModel): string {
   }
 
   const lines: string[] = ['@startuml'];
+
+  const graphOrientation = getGraphOrientation();
+  if (graphOrientation == 'TB') {
+    // do nothing
+  } else if (graphOrientation == 'LR') {
+    lines.push('left to right direction');
+  }
 
   let packageIndex = 1;
   for (const file of vm.files) {

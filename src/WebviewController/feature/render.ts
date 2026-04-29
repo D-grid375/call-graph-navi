@@ -4,7 +4,7 @@ import {
   getUiState,
   persistState,
   setLayoutPositions,
-  getGraphsOrientation,
+  getGraphOrientation,
 } from '../core/state';
 import type { GraphViewModel } from '../core/types';
 import {
@@ -106,9 +106,9 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
   }
 
   const graph = new dagre.graphlib.Graph({ compound: true });
-  const graphsOrientation = getGraphsOrientation();
+  const graphOrientation = getGraphOrientation();
   graph.setGraph({
-    rankdir: graphsOrientation,
+    rankdir: graphOrientation,
     nodesep: 30,
     ranksep: 60,
     marginx: PADDING,

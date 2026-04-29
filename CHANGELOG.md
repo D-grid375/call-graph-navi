@@ -2,6 +2,10 @@
 
 All notable changes to this extension will be documented in this file.
 
+## 0.2.0
+- You can now choose the display orientation of the call graph: vertical (default) or horizontal.
+- The default remains vertical as before.
+- This can be configured via the "Graph Orientation" setting in the extension settings.
 ## 0.1.4
 - Fix error messages for the "Show Incoming Call Graph" and "Show Outgoing Call Graph" commands
 ## 0.1.3

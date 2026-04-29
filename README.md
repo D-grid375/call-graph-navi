@@ -29,6 +29,10 @@ Click any function to jump straight to its definition.
 ### PlantUML Export
 Click the "**Export PlantUML**" button in the top toolbar to export the current graph as PlantUML.
 
+### Graph Orientation (added in v0.2.0)
+Choose the display orientation of the call graph: vertical (default) or horizontal.
+This can be configured via the "Graph Orientation" setting in the extension settings.
+
 ---
 
 ## Getting Started
