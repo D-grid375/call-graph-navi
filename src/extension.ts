@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { VSCodeAPIProvider } from './providers/VSCodeAPIProvider';
-import { WebviewPanelManager } from './WebviewPanelManager';
-import { CallGraphOptions } from '../shared/types';
-import type { RequestGraphFromNodeMessage } from '../shared/webviewMessages';
+import { VSCodeAPIProvider } from './VSCodeAPIProvider';
+import { WebviewManager } from './WebviewManager';
+import { CallGraphOptions } from './shared/types';
+import type { RequestGraphFromNodeMessage } from './shared/webviewMessages';
 
 /**
  * 拡張機能のエントリポイント。
@@ -13,7 +13,7 @@ import type { RequestGraphFromNodeMessage } from '../shared/webviewMessages';
  */
 export function activate(context: vscode.ExtensionContext) {
   const provider = new VSCodeAPIProvider();
-  const panelManager = new WebviewPanelManager(
+  const webviewManager = new WebviewManager(
     context,
     async (message) => {
       await showGraphFromLocation( // webviewからのグラフ描画コールバック登録
@@ -117,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
       },
       async () => {
         const data = await provider.getCallGraph(document, position, options);
-        panelManager.show(data);
+        webviewManager.show(data);
       }
     );
   };

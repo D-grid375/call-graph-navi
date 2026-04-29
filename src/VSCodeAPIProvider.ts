@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { CallGraphData, CallGraphOptions, FileGroup, GraphEdge, GraphNode } from '../../shared/types';
+import { CallGraphData, CallGraphOptions, FileGroup, GraphEdge, GraphNode } from './shared/types';
 
 /**
  * VSCode の Call Hierarchy API を利用したデータプロバイダ。

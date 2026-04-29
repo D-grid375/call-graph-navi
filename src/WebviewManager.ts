@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { CallGraphData } from '../shared/types';
+import { CallGraphData } from './shared/types';
 import {
   RequestGraphFromNodeMessage,
   UpdateGraphMessage,
   WebviewToExtensionMessage,
-} from '../shared/webviewMessages';
+} from './shared/webviewMessages';
 
 /**
  * WebviewPanel のライフサイクル管理。
  * 同時に複数開けるのではなく、既存パネルがあれば再利用する。
  */
-export class WebviewPanelManager {
+export class WebviewManager {
   private static readonly viewType = 'CallGraphNavi.graph';
   private panel: vscode.WebviewPanel | undefined;
 
@@ -37,7 +37,7 @@ export class WebviewPanelManager {
     // パネル初期化
     const viewStyle = this.panel ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside; // パネル新規作成の場合はタブを右にスプリット、既存パネルがあればその隣にタブを開く
     this.panel = vscode.window.createWebviewPanel(
-      WebviewPanelManager.viewType,
+      WebviewManager.viewType,
       'Call Graph Navi', // TODO:タブ名改善
       viewStyle,
       {
@@ -118,7 +118,7 @@ export class WebviewPanelManager {
     const jsUri = webview.asWebviewUri(
       vscode.Uri.file(path.join(mediaPath, 'graph.js'))
     );
-    const nonce = WebviewPanelManager.getNonce();
+    const nonce = WebviewManager.getNonce();
 
     html = html
       .replace(/{{cspSource}}/g, webview.cspSource)

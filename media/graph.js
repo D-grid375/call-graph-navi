@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // src/graph/core/dom.ts
+  // src/WebviewController/core/dom.ts
   var vscode = acquireVsCodeApi();
   var svg = document.getElementById("graph");
   var viewport = document.getElementById("viewport");
@@ -25,7 +25,7 @@
   var btnSearchNext = document.getElementById("btn-search-next");
   var searchIndicator = document.getElementById("search-indicator");
 
-  // src/graph/core/state.ts
+  // src/WebviewController/core/state.ts
   var currentGraphViewModel = null;
   var currentTransform = { x: 0, y: 0, scale: 1 };
   var uiState = { mode: "normal" };
@@ -82,7 +82,7 @@
     searchState = { query: "", hitIds: [], currentIndex: -1 };
   }
 
-  // src/graph/core/util.ts
+  // src/WebviewController/core/util.ts
   var NODE_LABEL_MARGIN_LEFT = 12;
   var NODE_LABEL_MARGIN_RIGHT = 12;
   function makeEdgeId(from, to) {
@@ -145,7 +145,7 @@
     return d;
   }
 
-  // src/graph/core/viewport.ts
+  // src/WebviewController/core/viewport.ts
   function applyTransform() {
     const t = getTransform();
     viewport.setAttribute(
@@ -172,7 +172,7 @@
     applyTransform();
   }
 
-  // src/graph/feature/render.ts
+  // src/WebviewController/feature/render.ts
   var PADDING = 20;
   var NODE_HEIGHT = 28;
   var FILE_REMOVE_BUTTON_SIZE = 16;
@@ -428,7 +428,7 @@ Click: open source`;
     }
   }
 
-  // src/graph/feature/exportPlantUml.ts
+  // src/WebviewController/feature/exportPlantUml.ts
   function exportPlantUmlToClipboard() {
     const vm = getViewModel();
     if (!vm) {
@@ -496,7 +496,7 @@ Click: open source`;
     return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
-  // src/graph/feature/buttonActions.ts
+  // src/WebviewController/feature/buttonActions.ts
   function showAllNodes() {
     const vm = getViewModel();
     if (!vm) {
@@ -545,7 +545,7 @@ Click: open source`;
     }
   }
 
-  // src/graph/feature/nodeInteraction/visibilityOps.ts
+  // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
   function hideNodes(vm, nodeIds) {
     for (const node of vm.nodes) {
       if (nodeIds.has(node.id)) {
@@ -627,7 +627,7 @@ Click: open source`;
     return visited;
   }
 
-  // src/graph/feature/nodeInteraction/pathVisualization.ts
+  // src/WebviewController/feature/nodeInteraction/pathVisualization.ts
   function applyPathVisualization(clickedNodeId) {
     const vm = getViewModel();
     if (!vm) {
@@ -676,7 +676,7 @@ Click: open source`;
     return { sourceId: vm.rootNodeId, targetId: clickedNodeId };
   }
 
-  // src/graph/feature/nodeInteraction/nodeContextMenu.ts
+  // src/WebviewController/feature/nodeInteraction/nodeContextMenu.ts
   var contextMenuNode = null;
   function showNodeContextMenu(node, event) {
     event.preventDefault();
@@ -745,7 +745,7 @@ Click: open source`;
     hideNodeContextMenu();
   }
 
-  // src/graph/feature/nodeInteraction/nodeClick.ts
+  // src/WebviewController/feature/nodeInteraction/nodeClick.ts
   function handleNodeClick(vm, node, event) {
     event.stopPropagation();
     if (event.shiftKey) {
@@ -759,7 +759,7 @@ Click: open source`;
     }
   }
 
-  // src/graph/feature/nodeInteraction/nodeInteraction.ts
+  // src/WebviewController/feature/nodeInteraction/nodeInteraction.ts
   function handleViewportClick(event) {
     const resolved = resolveNodeFromEventTarget(event.target);
     if (!resolved) {
@@ -798,7 +798,7 @@ Click: open source`;
     return { vm, node };
   }
 
-  // src/graph/feature/nodeInteraction/folderInteraction.ts
+  // src/WebviewController/feature/nodeInteraction/folderInteraction.ts
   function handleFolderClick(event) {
     const target = event.target;
     const button = target?.closest(".file-remove-button");
@@ -833,7 +833,7 @@ Click: open source`;
     );
   }
 
-  // src/graph/feature/nodeInteraction/nodeRemove.ts
+  // src/WebviewController/feature/nodeInteraction/nodeRemove.ts
   function handleNodeRemoveClick(event) {
     const target = event.target;
     const button = target?.closest(".node-remove-button");
@@ -858,7 +858,7 @@ Click: open source`;
     renderGraph(false);
   }
 
-  // src/graph/feature/nodeSearchInteraction.ts
+  // src/WebviewController/feature/nodeSearchInteraction.ts
   function handleSearchInputKeyDown(event) {
     if (event.key !== "Enter") {
       return;
@@ -1036,7 +1036,7 @@ Click: open source`;
     return (index % length + length) % length;
   }
 
-  // src/graph/feature/panZoom.ts
+  // src/WebviewController/feature/panZoom.ts
   var isPanning = false;
   var panStart = { x: 0, y: 0 };
   var panOriginal = { x: 0, y: 0 };
@@ -1084,7 +1084,7 @@ Click: open source`;
     applyTransform();
   }
 
-  // src/graph/feature/viewModel.ts
+  // src/WebviewController/feature/viewModel.ts
   function createGraphViewModel(data) {
     return {
       rootNodeId: data.rootNodeId,
@@ -1109,7 +1109,7 @@ Click: open source`;
     };
   }
 
-  // src/graph/main.ts
+  // src/WebviewController/WebviewController.ts
   if (restoreState()) {
     renderGraph(false);
     applyTransform();

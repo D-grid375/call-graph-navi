@@ -27,7 +27,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/extension/extension.ts
+// src/extension.ts
 var extension_exports = {};
 __export(extension_exports, {
   activate: () => activate,
@@ -36,7 +36,7 @@ __export(extension_exports, {
 module.exports = __toCommonJS(extension_exports);
 var vscode3 = __toESM(require("vscode"));
 
-// src/extension/providers/VSCodeAPIProvider.ts
+// src/VSCodeAPIProvider.ts
 var vscode = __toESM(require("vscode"));
 var VSCodeAPIProvider = class _VSCodeAPIProvider {
   /**
@@ -216,11 +216,11 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
   }
 };
 
-// src/extension/WebviewPanelManager.ts
+// src/WebviewManager.ts
 var vscode2 = __toESM(require("vscode"));
 var path = __toESM(require("path"));
 var fs = __toESM(require("fs"));
-var WebviewPanelManager = class _WebviewPanelManager {
+var WebviewManager = class _WebviewManager {
   /**
    * @param context 拡張機能コンテキスト（extensionPath と subscriptions の取得用）
    * @param onRequestGraphFromNode Webview から `requestGraphFromNode` メッセージが来た時のハンドラ
@@ -243,7 +243,7 @@ var WebviewPanelManager = class _WebviewPanelManager {
   show(data) {
     const viewStyle = this.panel ? vscode2.ViewColumn.Active : vscode2.ViewColumn.Beside;
     this.panel = vscode2.window.createWebviewPanel(
-      _WebviewPanelManager.viewType,
+      _WebviewManager.viewType,
       "Call Graph Navi",
       // TODO:タブ名改善
       viewStyle,
@@ -320,7 +320,7 @@ var WebviewPanelManager = class _WebviewPanelManager {
     const jsUri = webview.asWebviewUri(
       vscode2.Uri.file(path.join(mediaPath, "graph.js"))
     );
-    const nonce = _WebviewPanelManager.getNonce();
+    const nonce = _WebviewManager.getNonce();
     html = html.replace(/{{cspSource}}/g, webview.cspSource).replace(/{{nonce}}/g, nonce).replace(/{{cssUri}}/g, cssUri.toString()).replace(/{{dagreUri}}/g, dagreUri.toString()).replace(/{{jsUri}}/g, jsUri.toString());
     return html;
   }
@@ -352,10 +352,10 @@ var WebviewPanelManager = class _WebviewPanelManager {
   }
 };
 
-// src/extension/extension.ts
+// src/extension.ts
 function activate(context) {
   const provider = new VSCodeAPIProvider();
-  const panelManager = new WebviewPanelManager(
+  const webviewManager = new WebviewManager(
     context,
     async (message) => {
       await showGraphFromLocation(
@@ -420,7 +420,7 @@ function activate(context) {
       },
       async () => {
         const data = await provider.getCallGraph(document, position, options);
-        panelManager.show(data);
+        webviewManager.show(data);
       }
     );
   };
