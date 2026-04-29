@@ -266,6 +266,8 @@ var WebviewManager = class _WebviewManager {
         await this.openSource(message.filePath, message.line, message.character);
       } else if (message?.type === "exportPlantUml") {
         await this.exportPlantUml(message.text);
+      } else if (message?.type === "exportSvg") {
+        await this.exportSvg(message.svgText);
       }
     });
     const updateGraphMessage = { type: "updateGraph", graphData, extensionOptions };
@@ -299,6 +301,17 @@ var WebviewManager = class _WebviewManager {
         `Failed to open ${filePath}: ${err.message}`
       );
     }
+  }
+  async exportSvg(svgText) {
+    const uri = await vscode2.window.showSaveDialog({
+      filters: { "SVG Image": ["svg"] },
+      defaultUri: vscode2.Uri.file("call-graph.svg")
+    });
+    if (!uri) {
+      return;
+    }
+    await vscode2.workspace.fs.writeFile(uri, new TextEncoder().encode(svgText));
+    vscode2.window.showInformationMessage("SVG exported.");
   }
   /**
    * Webviewからのコールバック処理：PlantUMLテキストをクリップボードにコピーする

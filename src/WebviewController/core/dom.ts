@@ -20,6 +20,7 @@ export const btnReset = document.getElementById('btn-reset') as HTMLButtonElemen
 export const btnShowAll = document.getElementById('btn-show-all') as HTMLButtonElement;
 export const btnHideAll = document.getElementById('btn-hide-all') as HTMLButtonElement;
 export const btnExportPlantUml = document.getElementById('btn-export-plantuml') as HTMLButtonElement;
+export const btnExportSvg = document.getElementById('btn-export-svg') as HTMLButtonElement;
 export const searchInput = document.getElementById('search-input') as HTMLInputElement;
 export const btnSearchPrev = document.getElementById('btn-search-prev') as HTMLButtonElement;
 export const btnSearchNext = document.getElementById('btn-search-next') as HTMLButtonElement;

@@ -29,9 +29,15 @@ export interface ExportPlantUmlMessage {
   text: string;
 }
 
+export interface ExportSvgMessage {
+  type: 'exportSvg';
+  svgText: string;
+}
+
 export type WebviewToExtensionMessage =
   | NodeClickMessage
   | RequestGraphFromNodeMessage
-  | ExportPlantUmlMessage;
+  | ExportPlantUmlMessage
+  | ExportSvgMessage;
 
 export type ExtensionToWebviewMessage = UpdateGraphMessage;

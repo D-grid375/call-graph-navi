@@ -20,6 +20,7 @@
   var btnShowAll = document.getElementById("btn-show-all");
   var btnHideAll = document.getElementById("btn-hide-all");
   var btnExportPlantUml = document.getElementById("btn-export-plantuml");
+  var btnExportSvg = document.getElementById("btn-export-svg");
   var searchInput = document.getElementById("search-input");
   var btnSearchPrev = document.getElementById("btn-search-prev");
   var btnSearchNext = document.getElementById("btn-search-next");
@@ -566,6 +567,55 @@ Click: open source`;
     for (const edge of vm.edges) {
       edge.view.visibility = "hidden";
     }
+  }
+
+  // src/WebviewController/feature/exportSvg.ts
+  function exportSvgToFile() {
+    const cloned = svg.cloneNode(true);
+    inlineStyles(cloned);
+    const serializer = new XMLSerializer();
+    const svgText = serializer.serializeToString(cloned);
+    vscode.postMessage({ type: "exportSvg", svgText });
+  }
+  function inlineStyles(cloned) {
+    const clonedEls = cloned.querySelectorAll("*");
+    const originalEls = svg.querySelectorAll("*");
+    const RECT_PROPS = ["fill", "stroke", "strokeWidth"];
+    const TEXT_PROPS = ["fill", "fontSize", "fontFamily", "fontWeight"];
+    const PATH_PROPS = ["fill", "stroke", "strokeWidth"];
+    for (let i = 0; i < clonedEls.length; i++) {
+      const clonedEl = clonedEls[i];
+      const originalEl = originalEls[i];
+      if (!originalEl) {
+        continue;
+      }
+      const tag = clonedEl.tagName.toLowerCase();
+      let props;
+      if (tag === "rect") {
+        props = RECT_PROPS;
+      } else if (tag === "text") {
+        props = TEXT_PROPS;
+      } else if (tag === "path") {
+        props = PATH_PROPS;
+      } else {
+        continue;
+      }
+      const computed = getComputedStyle(originalEl);
+      for (const prop of props) {
+        const value = computed[prop];
+        if (value) {
+          clonedEl.style[prop] = value;
+        }
+      }
+    }
+    const markerPath = cloned.querySelector("marker path");
+    const originalMarkerPath = svg.querySelector("marker path");
+    if (markerPath && originalMarkerPath) {
+      const computed = getComputedStyle(originalMarkerPath);
+      markerPath.style.fill = computed.fill;
+    }
+    const { width, height } = svg.getBoundingClientRect();
+    cloned.setAttribute("viewBox", `0 0 ${width} ${height}`);
   }
 
   // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
@@ -1145,6 +1195,7 @@ Click: open source`;
   btnShowAll.addEventListener("click", showAllNodes);
   btnHideAll.addEventListener("click", hideAllNodes);
   btnExportPlantUml.addEventListener("click", exportPlantUml);
+  btnExportSvg.addEventListener("click", exportSvgToFile);
   searchInput.addEventListener("keydown", handleSearchInputKeyDown);
   btnSearchNext.addEventListener("click", handleSearchNextClick);
   btnSearchPrev.addEventListener("click", handleSearchPrevClick);
