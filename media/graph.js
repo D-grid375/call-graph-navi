@@ -884,10 +884,6 @@ Click: open source`;
   function handleSearchNextClick() {
     handleSearchButtonClick(1);
   }
-  function resetSearchUiState() {
-    clearSearchState();
-    updateIndicator(-1, 0);
-  }
   function clearSearchResults() {
     const vm = getViewModel();
     const highlightChanged = vm ? updateHighlightedNodes(vm, []) : false;
@@ -1118,7 +1114,6 @@ Click: open source`;
     const msg = event.data;
     if (msg && msg.type === "updateGraph") {
       setViewModel(createGraphViewModel(msg.data));
-      resetSearchUiState();
       hideNodeContextMenu();
       renderGraph(true);
     }

@@ -1,3 +1,8 @@
+/**
+ * @abstract
+ * Webview制御：グラフのレンダリングとパネル操作によるイベントを処理する
+ */
+
 import {
   btnExportPlantUml,
   btnHideAll,
@@ -55,12 +60,11 @@ if (restoreState()) {
   applyTransform();
 }
 
-// グラフ描画コマンド実行時処理
+// グラフ描画イベント
 window.addEventListener('message', (event) => {
   const msg = event.data;
   if (msg && msg.type === 'updateGraph') {
     setViewModel(createGraphViewModel(msg.data)); // 生データからViewModelを生成
-    resetSearchUiState();                         // 検索入力は残しつつヒット状態だけ初期化
     hideNodeContextMenu();                        // 前の画面で開いていたノードのコンテキストメニューが残っている可能性があるので閉じる
     renderGraph(true);                            // ViewModelからグラフ描画
   }

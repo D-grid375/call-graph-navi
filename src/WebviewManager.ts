@@ -1,3 +1,8 @@
+/**
+ * @abstract
+ * Webview管理：パネル新規生成・更新とWebviewからのコールバックを処理
+ */
+
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -31,9 +36,8 @@ export class WebviewManager {
    * 毎回 `updateGraph` メッセージを postMessage してグラフを差し替える。
    *
    * @param data 表示する `CallGraphData`
-   * @todo 責務分離
    */
-  show(data: CallGraphData): void {
+  updateWebview(data: CallGraphData): void {
     // パネル初期化
     const viewStyle = this.panel ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside; // パネル新規作成の場合はタブを右にスプリット、既存パネルがあればその隣にタブを開く
     this.panel = vscode.window.createWebviewPanel(
@@ -54,21 +58,22 @@ export class WebviewManager {
 
     // Webviewからのコールバック登録：Webviewはブラウザのサンドボックス内で動くため、VSCode APIが必要な処理はコールバック必要
     this.panel.webview.onDidReceiveMessage(async (message: WebviewToExtensionMessage) => {
-      if (message?.type === 'nodeClick') {
+      if (message?.type === 'requestGraphFromNode') {
+        await this.onRequestGraphFromNode(message); // extensionにコールバック
+      } else if (message?.type === 'nodeClick') {
         await this.openSource(message.filePath, message.line, message.character);
-      } else if (message?.type === 'requestGraphFromNode') {
-        await this.onRequestGraphFromNode(message);
       } else if (message?.type === 'exportPlantUml') {
-        await this.exportPlantUml(message.text);     
+        await this.exportPlantUml(message.text);
       }
     });
 
-    // webviewにグラフ描画指示
+    // webviewにグラフデータを渡して描画要求
     const message: UpdateGraphMessage = { type: 'updateGraph', data };
     this.panel.webview.postMessage(message);
   }
 
   /**
+   * Webviewからのコールバック処理：エディタ上での指定箇所の表示
    * 指定位置のソースコードをエディタで開き、カーソルを合わせて中央にスクロールする。
    * Webview で `Shift+クリック` されたときの処理に使われる。
    *
@@ -95,6 +100,16 @@ export class WebviewManager {
         `Failed to open ${filePath}: ${(err as Error).message}`
       );
     }
+  }
+
+  /**
+   * Webviewからのコールバック処理：PlantUMLテキストをクリップボードにコピーする
+   *
+   * @param umltext エクスポートするPlantUMLテキスト（Webview側で成形済み）
+   */
+  private async exportPlantUml(umltext: string): Promise<void> {
+    await vscode.env.clipboard.writeText(umltext);
+    vscode.window.showInformationMessage('PlantUML copied to clipboard.');
   }
 
   /**
@@ -144,18 +159,5 @@ export class WebviewManager {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
-  }
-
-  /**
-   * 指定位置のソースコードをエディタで開き、カーソルを合わせて中央にスクロールする。
-   * Webview で `Shift+クリック` されたときの処理に使われる。
-   *
-   * @param filePath 開きたいファイルの絶対パス
-   * @param line カーソルを合わせる行（0-origin）
-   * @param character カーソルを合わせる桁（0-origin）
-   */
-  private async exportPlantUml(umltext: string): Promise<void> {
-    await vscode.env.clipboard.writeText(umltext);
-    vscode.window.showInformationMessage('PlantUML copied to clipboard.');
   }
 }

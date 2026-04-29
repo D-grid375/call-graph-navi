@@ -1,3 +1,8 @@
+/**
+ * @abstract
+ * VScode APIからコールヒエラルキーを取得 → グラフデータに成形して返す
+ */
+
 import * as vscode from 'vscode';
 import { CallGraphData, CallGraphOptions, FileGroup, GraphEdge, GraphNode } from './shared/types';
 
@@ -19,7 +24,7 @@ export class VSCodeAPIProvider {
    * @returns 正規化済みの {@link CallGraphData}
    * @throws カーソル位置から Call Hierarchy を取得できなかった場合
    */
-  async getCallGraph(
+  async getCallGraphData(
     document: vscode.TextDocument,
     position: vscode.Position,
     options: CallGraphOptions

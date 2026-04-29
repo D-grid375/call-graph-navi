@@ -52,7 +52,7 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
    * @returns 正規化済みの {@link CallGraphData}
    * @throws カーソル位置から Call Hierarchy を取得できなかった場合
    */
-  async getCallGraph(document, position, options) {
+  async getCallGraphData(document, position, options) {
     const rootItems = await vscode.commands.executeCommand("vscode.prepareCallHierarchy", document.uri, position);
     if (!rootItems || rootItems.length === 0) {
       throw new Error("No call hierarchy found\u2026");
@@ -238,9 +238,8 @@ var WebviewManager = class _WebviewManager {
    * 毎回 `updateGraph` メッセージを postMessage してグラフを差し替える。
    *
    * @param data 表示する `CallGraphData`
-   * @todo 責務分離
    */
-  show(data) {
+  updateWebview(data) {
     const viewStyle = this.panel ? vscode2.ViewColumn.Active : vscode2.ViewColumn.Beside;
     this.panel = vscode2.window.createWebviewPanel(
       _WebviewManager.viewType,
@@ -261,10 +260,10 @@ var WebviewManager = class _WebviewManager {
       this.panel = void 0;
     });
     this.panel.webview.onDidReceiveMessage(async (message2) => {
-      if (message2?.type === "nodeClick") {
-        await this.openSource(message2.filePath, message2.line, message2.character);
-      } else if (message2?.type === "requestGraphFromNode") {
+      if (message2?.type === "requestGraphFromNode") {
         await this.onRequestGraphFromNode(message2);
+      } else if (message2?.type === "nodeClick") {
+        await this.openSource(message2.filePath, message2.line, message2.character);
       } else if (message2?.type === "exportPlantUml") {
         await this.exportPlantUml(message2.text);
       }
@@ -273,6 +272,7 @@ var WebviewManager = class _WebviewManager {
     this.panel.webview.postMessage(message);
   }
   /**
+   * Webviewからのコールバック処理：エディタ上での指定箇所の表示
    * 指定位置のソースコードをエディタで開き、カーソルを合わせて中央にスクロールする。
    * Webview で `Shift+クリック` されたときの処理に使われる。
    *
@@ -299,6 +299,15 @@ var WebviewManager = class _WebviewManager {
         `Failed to open ${filePath}: ${err.message}`
       );
     }
+  }
+  /**
+   * Webviewからのコールバック処理：PlantUMLテキストをクリップボードにコピーする
+   *
+   * @param umltext エクスポートするPlantUMLテキスト（Webview側で成形済み）
+   */
+  async exportPlantUml(umltext) {
+    await vscode2.env.clipboard.writeText(umltext);
+    vscode2.window.showInformationMessage("PlantUML copied to clipboard.");
   }
   /**
    * Webview に読み込ませる HTML を生成する。
@@ -338,18 +347,6 @@ var WebviewManager = class _WebviewManager {
     }
     return text;
   }
-  /**
-   * 指定位置のソースコードをエディタで開き、カーソルを合わせて中央にスクロールする。
-   * Webview で `Shift+クリック` されたときの処理に使われる。
-   *
-   * @param filePath 開きたいファイルの絶対パス
-   * @param line カーソルを合わせる行（0-origin）
-   * @param character カーソルを合わせる桁（0-origin）
-   */
-  async exportPlantUml(umltext) {
-    await vscode2.env.clipboard.writeText(umltext);
-    vscode2.window.showInformationMessage("PlantUML copied to clipboard.");
-  }
 };
 
 // src/extension.ts
@@ -358,7 +355,7 @@ function activate(context) {
   const webviewManager = new WebviewManager(
     context,
     async (message) => {
-      await showGraphFromLocation(
+      await showGraphFromWebview(
         // webviewからのグラフ描画コールバック登録
         message.filePath,
         message.line,
@@ -370,33 +367,21 @@ function activate(context) {
   context.subscriptions.push(
     vscode3.commands.registerCommand(
       "CallGraphNavi.showOutgoing",
-      () => showGraph("outgoing")
+      () => showGraphFromEditer("outgoing")
     ),
     vscode3.commands.registerCommand(
       "CallGraphNavi.showIncoming",
-      () => showGraph("incoming")
+      () => showGraphFromEditer("incoming")
     )
   );
-  const showGraphFromLocation = async (filePath, line, character, direction) => {
-    try {
-      const uri = vscode3.Uri.file(filePath);
-      const document = await vscode3.workspace.openTextDocument(uri);
-      const position = new vscode3.Position(line, character);
-      await buildAndShowGraph(document, position, direction);
-    } catch (err) {
-      vscode3.window.showErrorMessage(
-        `Call Graph Navi: ${err.message}`
-      );
-    }
-  };
-  const showGraph = async (direction) => {
+  const showGraphFromEditer = async (direction) => {
     const editor = vscode3.window.activeTextEditor;
     if (!editor) {
       vscode3.window.showWarningMessage("No active editor.");
       return;
     }
     try {
-      await buildAndShowGraph(
+      await showGraphCommon(
         editor.document,
         editor.selection.active,
         direction
@@ -407,7 +392,19 @@ function activate(context) {
       );
     }
   };
-  const buildAndShowGraph = async (document, position, direction) => {
+  const showGraphFromWebview = async (filePath, line, character, direction) => {
+    try {
+      const uri = vscode3.Uri.file(filePath);
+      const document = await vscode3.workspace.openTextDocument(uri);
+      const position = new vscode3.Position(line, character);
+      await showGraphCommon(document, position, direction);
+    } catch (err) {
+      vscode3.window.showErrorMessage(
+        `Call Graph Navi: ${err.message}`
+      );
+    }
+  };
+  const showGraphCommon = async (document, position, direction) => {
     const config = vscode3.workspace.getConfiguration("CallGraphNavi");
     const maxDepth = config.get("maxDepth", 0);
     const showArguments = config.get("showArguments", false);
@@ -419,8 +416,8 @@ function activate(context) {
         cancellable: false
       },
       async () => {
-        const data = await provider.getCallGraph(document, position, options);
-        webviewManager.show(data);
+        const data = await provider.getCallGraphData(document, position, options);
+        webviewManager.updateWebview(data);
       }
     );
   };

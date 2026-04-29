@@ -1,3 +1,17 @@
+/**
+ * @abstract
+ * グラフ描画のエントリー管理
+ *
+ * @description
+ * 責務
+ * - 拡張機能の初期化：エントリーとコールバックの登録
+ * - グラフ描画要求に対する更新処理
+ * 
+ * グラフ描画要求は以下のパターンが存在
+ * - エディタ上のコンテクストメニューからのグラフ描画
+ * - WebviewPanelのノードからのグラフ描画
+ */
+
 import * as vscode from 'vscode';
 import { VSCodeAPIProvider } from './VSCodeAPIProvider';
 import { WebviewManager } from './WebviewManager';
@@ -16,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
   const webviewManager = new WebviewManager(
     context,
     async (message) => {
-      await showGraphFromLocation( // webviewからのグラフ描画コールバック登録
+      await showGraphFromWebview( // webviewからのグラフ描画コールバック登録
         message.filePath,
         message.line,
         message.character,
@@ -28,23 +42,51 @@ export function activate(context: vscode.ExtensionContext) {
   // コマンド実行時のエントリ関数登録
   context.subscriptions.push(
     vscode.commands.registerCommand('CallGraphNavi.showOutgoing', () =>
-      showGraph('outgoing')
+      showGraphFromEditer('outgoing')
     ),
     vscode.commands.registerCommand('CallGraphNavi.showIncoming', () =>
-      showGraph('incoming')
+      showGraphFromEditer('incoming')
     )
   );
 
   /**
+   * コマンド実行時のエントリ関数。
+   * アクティブなエディタのカーソル位置を起点として {@link showGraphCommon} を呼ぶ。
+   * アクティブエディタがなければ警告、構築中の例外はエラーメッセージで通知する。
+   *
+   * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
+   */
+  const showGraphFromEditer = async (direction: 'outgoing' | 'incoming') => {
+    // 展開中のコードエディタを取得
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('No active editor.');
+      return;
+    }
+
+    try {
+      await showGraphCommon(
+        editor.document,
+        editor.selection.active,
+        direction
+      );
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Call Graph Navi: ${(err as Error).message}`
+      );
+    }
+  };
+
+  /**
    * Webview からのコンテキストメニュー操作で、任意のノードを起点に再度コールグラフを再構築するためのエントリ。
-   * 指定ファイルを開き `Position` を作成してから {@link buildAndShowGraph} に委譲する。
+   * 指定ファイルを開き `Position` を作成してから {@link showGraphCommon} に委譲する。
    *
    * @param filePath 起点関数が含まれるファイルの絶対パス
    * @param line 起点関数のカーソル行（0-origin）
    * @param character 起点関数のカーソル桁（0-origin）
    * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
    */
-  const showGraphFromLocation = async (
+  const showGraphFromWebview = async (
     filePath: string,
     line: number,
     character: number,
@@ -54,35 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
       const uri = vscode.Uri.file(filePath);
       const document = await vscode.workspace.openTextDocument(uri);
       const position = new vscode.Position(line, character);
-      await buildAndShowGraph(document, position, direction);
-    } catch (err) {
-      vscode.window.showErrorMessage(
-        `Call Graph Navi: ${(err as Error).message}`
-      );
-    }
-  };
-
-  /**
-   * コマンド実行時のエントリ関数。
-   * アクティブなエディタのカーソル位置を起点として {@link buildAndShowGraph} を呼ぶ。
-   * アクティブエディタがなければ警告、構築中の例外はエラーメッセージで通知する。
-   *
-   * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
-   */
-  const showGraph = async (direction: 'outgoing' | 'incoming') => {
-    // 展開中のコードエディタを取得
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showWarningMessage('No active editor.');
-      return;
-    }
-
-    try {
-      await buildAndShowGraph(
-        editor.document,
-        editor.selection.active,
-        direction
-      );
+      await showGraphCommon(document, position, direction);
     } catch (err) {
       vscode.window.showErrorMessage(
         `Call Graph Navi: ${(err as Error).message}`
@@ -99,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
    * @param position 起点関数のカーソル位置
    * @param direction 'outgoing' = 呼び出し先方向 / 'incoming' = 呼び出し元方向
    */
-  const buildAndShowGraph = async (
+  const showGraphCommon = async (
     document: vscode.TextDocument,
     position: vscode.Position,
     direction: 'outgoing' | 'incoming'
@@ -116,8 +130,10 @@ export function activate(context: vscode.ExtensionContext) {
         cancellable: false,
       },
       async () => {
-        const data = await provider.getCallGraph(document, position, options);
-        webviewManager.show(data);
+        // グラフデータ取得
+        const data = await provider.getCallGraphData(document, position, options);
+        // データをManagerに渡してグラフ更新
+        webviewManager.updateWebview(data);
       }
     );
   };
