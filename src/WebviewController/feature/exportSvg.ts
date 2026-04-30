@@ -1,11 +1,37 @@
-import { vscode, svg } from '../core/dom';
+import { vscode, svg, viewport } from '../core/dom';
+
+const EXPORT_PADDING = 20;
 
 export function exportSvgToFile(): void {
   const cloned = svg.cloneNode(true) as SVGSVGElement;
   inlineStyles(cloned);
+  fitToGraphBounds(cloned);
   const serializer = new XMLSerializer();
   const svgText = serializer.serializeToString(cloned);
   vscode.postMessage({ type: 'exportSvg', svgText });
+}
+
+/**
+ * クローンSVGをグラフ全体が収まるサイズ・viewBoxに調整する。
+ * - クローン側の viewport の transform を消してパン・ズーム状態を解除
+ * - オリジナルの viewport.getBBox() で取得した素のグラフ範囲（transform前）に
+ *   パディングを足したものを viewBox / width / height として設定
+ */
+function fitToGraphBounds(cloned: SVGSVGElement): void {
+  const bbox = viewport.getBBox();
+  const x = bbox.x - EXPORT_PADDING;
+  const y = bbox.y - EXPORT_PADDING;
+  const w = bbox.width + EXPORT_PADDING * 2;
+  const h = bbox.height + EXPORT_PADDING * 2;
+
+  const clonedViewport = cloned.querySelector('#viewport');
+  if (clonedViewport) {
+    clonedViewport.removeAttribute('transform');
+  }
+
+  cloned.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+  cloned.setAttribute('width', String(w));
+  cloned.setAttribute('height', String(h));
 }
 
 /**
@@ -57,8 +83,4 @@ function inlineStyles(cloned: SVGSVGElement): void {
     const computed = getComputedStyle(originalMarkerPath);
     (markerPath as SVGElement).style.fill = computed.fill;
   }
-
-  // viewBoxをオリジナルのSVG要素の実サイズで設定する
-  const { width, height } = svg.getBoundingClientRect();
-  cloned.setAttribute('viewBox', `0 0 ${width} ${height}`);
 }

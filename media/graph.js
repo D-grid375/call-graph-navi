@@ -571,12 +571,28 @@ Click: open source`;
   }
 
   // src/WebviewController/feature/exportSvg.ts
+  var EXPORT_PADDING = 20;
   function exportSvgToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
+    fitToGraphBounds(cloned);
     const serializer = new XMLSerializer();
     const svgText = serializer.serializeToString(cloned);
     vscode.postMessage({ type: "exportSvg", svgText });
+  }
+  function fitToGraphBounds(cloned) {
+    const bbox = viewport.getBBox();
+    const x = bbox.x - EXPORT_PADDING;
+    const y = bbox.y - EXPORT_PADDING;
+    const w = bbox.width + EXPORT_PADDING * 2;
+    const h = bbox.height + EXPORT_PADDING * 2;
+    const clonedViewport = cloned.querySelector("#viewport");
+    if (clonedViewport) {
+      clonedViewport.removeAttribute("transform");
+    }
+    cloned.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+    cloned.setAttribute("width", String(w));
+    cloned.setAttribute("height", String(h));
   }
   function inlineStyles(cloned) {
     const clonedEls = cloned.querySelectorAll("*");
@@ -615,27 +631,36 @@ Click: open source`;
       const computed = getComputedStyle(originalMarkerPath);
       markerPath.style.fill = computed.fill;
     }
-    const { width, height } = svg.getBoundingClientRect();
-    cloned.setAttribute("viewBox", `0 0 ${width} ${height}`);
   }
 
   // src/WebviewController/feature/exportPng.ts
+  var EXPORT_PADDING2 = 20;
+  var PNG_SCALE = 2;
   function exportPngToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles2(cloned);
-    const { width, height } = svg.getBoundingClientRect();
+    const bbox = viewport.getBBox();
+    const x = bbox.x - EXPORT_PADDING2;
+    const y = bbox.y - EXPORT_PADDING2;
+    const width = bbox.width + EXPORT_PADDING2 * 2;
+    const height = bbox.height + EXPORT_PADDING2 * 2;
+    const clonedViewport = cloned.querySelector("#viewport");
+    if (clonedViewport) {
+      clonedViewport.removeAttribute("transform");
+    }
     cloned.setAttribute("width", String(width));
     cloned.setAttribute("height", String(height));
-    cloned.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    cloned.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
     const serializer = new XMLSerializer();
     const svgText = serializer.serializeToString(cloned);
     const svgDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width * PNG_SCALE;
+      canvas.height = height * PNG_SCALE;
       const ctx = canvas.getContext("2d");
+      ctx.scale(PNG_SCALE, PNG_SCALE);
       ctx.drawImage(img, 0, 0);
       const pngDataUrl = canvas.toDataURL("image/png");
       vscode.postMessage({ type: "exportPng", pngDataUrl });

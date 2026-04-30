@@ -1,14 +1,26 @@
-import { vscode, svg } from '../core/dom';
+import { vscode, svg, viewport } from '../core/dom';
+
+const EXPORT_PADDING = 20;
+const PNG_SCALE = 2;
 
 export function exportPngToFile(): void {
   const cloned = svg.cloneNode(true) as SVGSVGElement;
   inlineStyles(cloned);
 
-  const { width, height } = svg.getBoundingClientRect();
-  // クローンに明示的にwidth/height属性を設定（<img>のレンダリングサイズ確定のため）
+  const bbox = viewport.getBBox();
+  const x = bbox.x - EXPORT_PADDING;
+  const y = bbox.y - EXPORT_PADDING;
+  const width = bbox.width + EXPORT_PADDING * 2;
+  const height = bbox.height + EXPORT_PADDING * 2;
+
+  const clonedViewport = cloned.querySelector('#viewport');
+  if (clonedViewport) {
+    clonedViewport.removeAttribute('transform');
+  }
+
   cloned.setAttribute('width', String(width));
   cloned.setAttribute('height', String(height));
-  cloned.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  cloned.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
 
   const serializer = new XMLSerializer();
   const svgText = serializer.serializeToString(cloned);
@@ -18,9 +30,10 @@ export function exportPngToFile(): void {
   const img = new Image();
   img.onload = () => {
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width * PNG_SCALE;
+    canvas.height = height * PNG_SCALE;
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(PNG_SCALE, PNG_SCALE);
     ctx.drawImage(img, 0, 0);
     const pngDataUrl = canvas.toDataURL('image/png');
     vscode.postMessage({ type: 'exportPng', pngDataUrl });
