@@ -1,6 +1,6 @@
 import { renderGraph } from './render';
 import { getUiState, getViewModel } from '../core/state';
-import { exportPlantUmlToClipboard } from './exportPlantUml';
+import { exportPlantUmlToClipboard } from './export/exportPlantUml';
 
 /**
  * Show All ボタン押下時の処理。

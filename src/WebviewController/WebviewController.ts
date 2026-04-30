@@ -25,8 +25,8 @@ import {
   hideAllNodes,
   showAllNodes,
 } from './feature/buttonActions';
-import { exportSvgToFile } from './feature/exportSvg';
-import { exportPngToFile } from './feature/exportPng';
+import { exportSvgToFile } from './feature/export/exportSvg';
+import { exportPngToFile } from './feature/export/exportPng';
 import {
   handleViewportClick,
   handleViewportContextMenu,

@@ -1,6 +1,6 @@
-import { vscode } from '../core/dom';
-import { getViewModel, getGraphOrientation } from '../core/state';
-import type { GraphViewModel, NodeVM } from '../core/types';
+import { vscode } from '../../core/dom';
+import { getViewModel, getGraphOrientation } from '../../core/state';
+import type { GraphViewModel, NodeVM } from '../../core/types';
 
 /**
  * 現在表示中のグラフを PlantUML テキストに変換し、Extension Host に送信する。

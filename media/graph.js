@@ -448,7 +448,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/exportPlantUml.ts
+  // src/WebviewController/feature/export/exportPlantUml.ts
   function exportPlantUmlToClipboard() {
     const vm = getViewModel();
     if (!vm) {
@@ -570,7 +570,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/exportSvg.ts
+  // src/WebviewController/feature/export/exportSvg.ts
   var EXPORT_PADDING = 20;
   function exportSvgToFile() {
     const cloned = svg.cloneNode(true);
@@ -633,7 +633,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/exportPng.ts
+  // src/WebviewController/feature/export/exportPng.ts
   var EXPORT_PADDING2 = 20;
   var PNG_SCALE = 2;
   function exportPngToFile() {
