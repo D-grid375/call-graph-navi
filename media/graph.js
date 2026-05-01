@@ -570,16 +570,8 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/export/exportSvg.ts
+  // src/WebviewController/feature/export/exportUtil.ts
   var EXPORT_PADDING = 20;
-  function exportSvgToFile() {
-    const cloned = svg.cloneNode(true);
-    inlineStyles(cloned);
-    fitToGraphBounds(cloned);
-    const serializer = new XMLSerializer();
-    const svgText = serializer.serializeToString(cloned);
-    vscode.postMessage({ type: "exportSvg", svgText });
-  }
   function fitToGraphBounds(cloned) {
     const bbox = viewport.getBBox();
     const x = bbox.x - EXPORT_PADDING;
@@ -633,32 +625,30 @@ Click: open source`;
     }
   }
 
+  // src/WebviewController/feature/export/exportSvg.ts
+  function exportSvgToFile() {
+    const cloned = svg.cloneNode(true);
+    inlineStyles(cloned);
+    fitToGraphBounds(cloned);
+    const serializer = new XMLSerializer();
+    const svgText = serializer.serializeToString(cloned);
+    vscode.postMessage({ type: "exportSvg", svgText });
+  }
+
   // src/WebviewController/feature/export/exportPng.ts
-  var EXPORT_PADDING2 = 20;
-  var PNG_SCALE = 2;
+  var PNG_SCALE = 4;
   function exportPngToFile() {
     const cloned = svg.cloneNode(true);
-    inlineStyles2(cloned);
-    const bbox = viewport.getBBox();
-    const x = bbox.x - EXPORT_PADDING2;
-    const y = bbox.y - EXPORT_PADDING2;
-    const width = bbox.width + EXPORT_PADDING2 * 2;
-    const height = bbox.height + EXPORT_PADDING2 * 2;
-    const clonedViewport = cloned.querySelector("#viewport");
-    if (clonedViewport) {
-      clonedViewport.removeAttribute("transform");
-    }
-    cloned.setAttribute("width", String(width));
-    cloned.setAttribute("height", String(height));
-    cloned.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
+    inlineStyles(cloned);
+    fitToGraphBounds(cloned);
     const serializer = new XMLSerializer();
     const svgText = serializer.serializeToString(cloned);
     const svgDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = width * PNG_SCALE;
-      canvas.height = height * PNG_SCALE;
+      canvas.width = Number(cloned.getAttribute("width")) * PNG_SCALE;
+      canvas.height = Number(cloned.getAttribute("height")) * PNG_SCALE;
       const ctx = canvas.getContext("2d");
       ctx.scale(PNG_SCALE, PNG_SCALE);
       ctx.drawImage(img, 0, 0);
@@ -669,44 +659,6 @@ Click: open source`;
       console.error("PNG export failed: image load error", e);
     };
     img.src = svgDataUrl;
-  }
-  function inlineStyles2(cloned) {
-    const clonedEls = cloned.querySelectorAll("*");
-    const originalEls = svg.querySelectorAll("*");
-    const RECT_PROPS = ["fill", "stroke", "strokeWidth"];
-    const TEXT_PROPS = ["fill", "fontSize", "fontFamily", "fontWeight"];
-    const PATH_PROPS = ["fill", "stroke", "strokeWidth"];
-    for (let i = 0; i < clonedEls.length; i++) {
-      const clonedEl = clonedEls[i];
-      const originalEl = originalEls[i];
-      if (!originalEl) {
-        continue;
-      }
-      const tag = clonedEl.tagName.toLowerCase();
-      let props;
-      if (tag === "rect") {
-        props = RECT_PROPS;
-      } else if (tag === "text") {
-        props = TEXT_PROPS;
-      } else if (tag === "path") {
-        props = PATH_PROPS;
-      } else {
-        continue;
-      }
-      const computed = getComputedStyle(originalEl);
-      for (const prop of props) {
-        const value = computed[prop];
-        if (value) {
-          clonedEl.style[prop] = value;
-        }
-      }
-    }
-    const markerPath = cloned.querySelector("marker path");
-    const originalMarkerPath = svg.querySelector("marker path");
-    if (markerPath && originalMarkerPath) {
-      const computed = getComputedStyle(originalMarkerPath);
-      markerPath.style.fill = computed.fill;
-    }
   }
 
   // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
