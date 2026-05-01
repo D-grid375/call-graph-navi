@@ -26,11 +26,14 @@ Cut out the noise and focus on the call structure you care about.
 ### Jump to Definition
 Click any function to jump straight to its definition.
 
-### PlantUML Export
-Click the "**Export PlantUML**" button in the top toolbar to export the current graph as PlantUML.
+### Graph Export (SVG, PNG, PlantUML)
+Click the "Export" button in the top toolbar to export the current graph:
+- SVG (**added in v0.3.0**): Exports the current graph as a SVG file.
+- PNG (**added in v0.3.0**): Exports the current graph as a PNG file. The resolution can be configured in the extension settings.
+- PlantUML: Converts the current graph structure into PlantUML text and copies it to the clipboard.
 
-### Graph Orientation (added in v0.2.0)
-Choose the display orientation of the call graph: vertical (default) or horizontal.
+### Graph Orientation (**added in v0.2.0**)
+Choose the display orientation of the call graph: vertical (default) or horizontal.<br>
 This can be configured via the "Graph Orientation" setting in the extension settings.
 
 ---

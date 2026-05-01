@@ -2,6 +2,10 @@
 
 All notable changes to this extension will be documented in this file.
 
+## 0.3.0
+- Add SVG and PNG export formats for graph export.
+    - SVG: Exports the current graph as a SVG file.
+    - PNG: Exports the current graph as a PNG file. The resolution can be configured in the extension settings.
 ## 0.2.0
 - You can now choose the display orientation of the call graph: vertical (default) or horizontal.
 - The default remains vertical as before.
