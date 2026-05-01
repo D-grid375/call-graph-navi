@@ -176,3 +176,23 @@ export function getGraphOrientation(): string {
     return 'TB'; // Nullの時はデフォルト値
   }
 }
+
+/**
+ * PNGエクスポートの解像度倍率を返す
+ */
+export function getPngExportScale(): number {
+  // 変換用マップ
+  const PNG_EXPORT_SCALE_DEFAULT = 4;
+  const PNG_EXPORT_SCALE_MAP: Record<string, number> = {
+    '1x': 1,
+    '2x': 2,
+    '4x': 4,
+    '8x': 8,
+  };
+
+  // 現在設定値取得
+  const option = getExtensionOptions().pngExportScale;
+
+  // マッピングから対応する倍率値を返す（未マッチ・未設定時はデフォルト）
+  return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
+}

@@ -441,7 +441,8 @@ function activate(context) {
     const maxDepth = config.get("maxDepth", 0);
     const showArguments = config.get("showArguments", false);
     const graphOrientation = config.get("graphOrientation", "Vertical");
-    const options = { direction, maxDepth, showArguments, graphOrientation };
+    const pngExportScale = config.get("pngExportScale", "4x");
+    const options = { direction, maxDepth, showArguments, graphOrientation, pngExportScale };
     await vscode3.window.withProgress(
       {
         location: vscode3.ProgressLocation.Notification,

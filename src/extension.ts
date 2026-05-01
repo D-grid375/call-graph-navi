@@ -123,7 +123,8 @@ export function activate(context: vscode.ExtensionContext) {
     const maxDepth = config.get<number>('maxDepth', 0);
     const showArguments = config.get<boolean>('showArguments', false);
     const graphOrientation = config.get<string>('graphOrientation', "Vertical");
-    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphOrientation: graphOrientation };
+    const pngExportScale = config.get<string>('pngExportScale', "4x");
+    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphOrientation, pngExportScale };
 
     await vscode.window.withProgress(
       {

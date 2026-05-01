@@ -1,7 +1,6 @@
 import { vscode, svg } from '../../core/dom';
+import { getPngExportScale } from '../../core/state';
 import { inlineStyles, fitToGraphBounds } from './exportUtil';
-
-const PNG_SCALE = 4;
 
 /**
  * 現在表示中のグラフをPNG画像（base64 dataURL）に変換し、Extension Hostに送信する。
@@ -36,14 +35,19 @@ export function exportPngToFile(): void {
   // <img>にSVGをロードしてCanvasに描画 → PNG dataURLに変換 → Extension Hostへ送信
   const img = new Image();
   img.onload = () => { // 画像読み込み時のコールバックを登録
+    // 拡張機能設定からPNG解像度を取得
+    const PNG_SCALE = getPngExportScale();
+
     // PNG_SCALE倍の高解像度Canvasを定義
     const canvas = document.createElement('canvas');
     canvas.width = Number(cloned.getAttribute('width')) * PNG_SCALE;
     canvas.height = Number(cloned.getAttribute('height')) * PNG_SCALE;
+
     // ソースのSVGをscaleしてから画像化
     const ctx = canvas.getContext('2d')!;
     ctx.scale(PNG_SCALE, PNG_SCALE);
     ctx.drawImage(img, 0, 0);
+
     // URLに変換してExtension側にpostする
     const pngDataUrl = canvas.toDataURL('image/png');
     vscode.postMessage({ type: 'exportPng', pngDataUrl });

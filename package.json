@@ -79,13 +79,33 @@
         },
         "CallGraphNavi.graphOrientation": {
           "type": "string",
-          "enum": ["TB", "LR"],
+          "enum": [
+            "TB",
+            "LR"
+          ],
           "enumDescriptions": [
             "TB: Top to Bottom (Vertical)",
             "LR: Left to Right (Horizontal)"
           ],
           "default": "TB",
           "description": "Specifies the orientation of the graph\n- TB: Top to Bottom (Vertical)\n- LR: Left to Right (Horizontal)"
+        },
+        "CallGraphNavi.pngExportScale": {
+          "type": "string",
+          "enum": [
+            "1x",
+            "2x",
+            "4x",
+            "8x"
+          ],
+          "enumDescriptions": [
+            "1x: Low quality",
+            "2x: Standard",
+            "4x: High quality",
+            "8x: Ultra high quality"
+          ],
+          "default": "4x",
+          "description": "Controls the resolution of PNG exports\nNote that higher resolutions increase rendering time and file size\n- 1x: Low quality\n- 2x: Standard\n- 4x: High quality\n- 8x: Ultra high quality"
         }
       }
     }

@@ -37,4 +37,5 @@ export interface ExtensionOptions {
   maxDepth: number; // 0 = 無制限
   showArguments: boolean;
   graphOrientation: string;
+  pngExportScale: string;
 }

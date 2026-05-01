@@ -102,6 +102,17 @@
       return "TB";
     }
   }
+  function getPngExportScale() {
+    const PNG_EXPORT_SCALE_DEFAULT = 4;
+    const PNG_EXPORT_SCALE_MAP = {
+      "1x": 1,
+      "2x": 2,
+      "4x": 4,
+      "8x": 8
+    };
+    const option = getExtensionOptions().pngExportScale;
+    return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
+  }
 
   // src/WebviewController/core/util.ts
   var NODE_LABEL_MARGIN_LEFT = 12;
@@ -638,7 +649,6 @@ Click: open source`;
   }
 
   // src/WebviewController/feature/export/exportPng.ts
-  var PNG_SCALE = 4;
   function exportPngToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
@@ -648,6 +658,7 @@ Click: open source`;
     const svgDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
     const img = new Image();
     img.onload = () => {
+      const PNG_SCALE = getPngExportScale();
       const canvas = document.createElement("canvas");
       canvas.width = Number(cloned.getAttribute("width")) * PNG_SCALE;
       canvas.height = Number(cloned.getAttribute("height")) * PNG_SCALE;
