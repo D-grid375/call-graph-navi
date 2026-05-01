@@ -162,12 +162,15 @@ html, body {
 
 #export-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 4px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  margin-top: 4px;
+  padding: 4px;
+  background: var(--vscode-menu-background, #252526);
+  color: var(--vscode-menu-foreground, #cccccc);
+  border: 1px solid var(--vscode-menu-border, #454545);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   z-index: 50;
 }
 
@@ -176,8 +179,23 @@ html, body {
 }
 
 #export-menu button {
-  margin: 2px 0;
+  background: transparent;
+  color: var(--vscode-menu-foreground, #cccccc);
+  border: none;
+  padding: 6px 12px;
+  margin: 0;
   text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+#export-menu button:hover,
+#export-menu button:focus {
+  background: var(--vscode-menu-selectionBackground, #094771);
+  color: var(--vscode-menu-selectionForeground, #ffffff);
+  outline: none;
+  filter: none;
 }
 
 #toolbar button.mode-active {
