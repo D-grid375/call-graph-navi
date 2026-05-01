@@ -16,9 +16,14 @@
     <button id="btn-hide-all" style="display: none;">Hide All</button> <!-- 非表示 -->
     <button id="btn-reset">Reset View</button>
     <button id="btn-show-all">Unhide All Nodes</button>
-    <button id="btn-export-plantuml">Export PlantUML</button>
-    <button id="btn-export-svg">Export SVG</button>
-    <button id="btn-export-png">Export PNG</button>
+    <div id="export-wrap">
+      <button id="btn-export">Export</button>
+      <div id="export-menu" class="hidden">
+        <button id="btn-export-plantuml">Export PlantUML</button>
+        <button id="btn-export-svg">Export SVG</button>
+        <button id="btn-export-png">Export PNG</button>
+      </div>
+    </div>
     <span class="spacer"></span>
     <span id="search-box">
       <span class="search-input-wrap">

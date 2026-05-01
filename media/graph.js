@@ -19,6 +19,8 @@
   var btnReset = document.getElementById("btn-reset");
   var btnShowAll = document.getElementById("btn-show-all");
   var btnHideAll = document.getElementById("btn-hide-all");
+  var btnExport = document.getElementById("btn-export");
+  var exportMenu = document.getElementById("export-menu");
   var btnExportPlantUml = document.getElementById("btn-export-plantuml");
   var btnExportSvg = document.getElementById("btn-export-svg");
   var btnExportPng = document.getElementById("btn-export-png");
@@ -661,6 +663,27 @@ Click: open source`;
     img.src = svgDataUrl;
   }
 
+  // src/WebviewController/feature/export/exportMenu.ts
+  function toggleExportMenu(event) {
+    event.stopPropagation();
+    exportMenu.classList.toggle("hidden");
+  }
+  function hideExportMenu() {
+    exportMenu.classList.add("hidden");
+  }
+  function handleWindowClickForExportMenu(event) {
+    const target = event.target;
+    if (btnExport.contains(target) || exportMenu.contains(target)) {
+      return;
+    }
+    hideExportMenu();
+  }
+  function handleWindowKeyDownForExportMenu(event) {
+    if (event.key === "Escape") {
+      hideExportMenu();
+    }
+  }
+
   // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
   function hideNodes(vm, nodeIds) {
     for (const node of vm.nodes) {
@@ -1237,9 +1260,21 @@ Click: open source`;
   btnReset.addEventListener("click", resetView);
   btnShowAll.addEventListener("click", showAllNodes);
   btnHideAll.addEventListener("click", hideAllNodes);
-  btnExportPlantUml.addEventListener("click", exportPlantUml);
-  btnExportSvg.addEventListener("click", exportSvgToFile);
-  btnExportPng.addEventListener("click", exportPngToFile);
+  btnExport.addEventListener("click", toggleExportMenu);
+  btnExportPlantUml.addEventListener("click", () => {
+    exportPlantUml();
+    hideExportMenu();
+  });
+  btnExportSvg.addEventListener("click", () => {
+    exportSvgToFile();
+    hideExportMenu();
+  });
+  btnExportPng.addEventListener("click", () => {
+    exportPngToFile();
+    hideExportMenu();
+  });
+  window.addEventListener("click", handleWindowClickForExportMenu);
+  window.addEventListener("keydown", handleWindowKeyDownForExportMenu);
   searchInput.addEventListener("keydown", handleSearchInputKeyDown);
   btnSearchNext.addEventListener("click", handleSearchNextClick);
   btnSearchPrev.addEventListener("click", handleSearchPrevClick);

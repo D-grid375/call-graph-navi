@@ -4,6 +4,7 @@
  */
 
 import {
+  btnExport,
   btnExportPlantUml,
   btnExportSvg,
   btnExportPng,
@@ -27,6 +28,12 @@ import {
 } from './feature/buttonActions';
 import { exportSvgToFile } from './feature/export/exportSvg';
 import { exportPngToFile } from './feature/export/exportPng';
+import {
+  handleWindowClickForExportMenu,
+  handleWindowKeyDownForExportMenu,
+  hideExportMenu,
+  toggleExportMenu,
+} from './feature/export/exportMenu';
 import {
   handleViewportClick,
   handleViewportContextMenu,
@@ -80,9 +87,12 @@ window.addEventListener('message', (event) => {
 btnReset.addEventListener('click', resetView);
 btnShowAll.addEventListener('click', showAllNodes);
 btnHideAll.addEventListener('click', hideAllNodes);
-btnExportPlantUml.addEventListener('click', exportPlantUml);
-btnExportSvg.addEventListener('click', exportSvgToFile);
-btnExportPng.addEventListener('click', exportPngToFile);
+btnExport.addEventListener('click', toggleExportMenu);
+btnExportPlantUml.addEventListener('click', () => { exportPlantUml(); hideExportMenu(); });
+btnExportSvg.addEventListener('click', () => { exportSvgToFile(); hideExportMenu(); });
+btnExportPng.addEventListener('click', () => { exportPngToFile(); hideExportMenu(); });
+window.addEventListener('click', handleWindowClickForExportMenu);
+window.addEventListener('keydown', handleWindowKeyDownForExportMenu);
 
 // 検索UIイベント
 searchInput.addEventListener('keydown', handleSearchInputKeyDown);
