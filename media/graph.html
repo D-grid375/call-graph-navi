@@ -43,7 +43,13 @@
     </span>
   </div>
   <div id="graph-container">
-    <div id="info">No graph loaded.</div>
+    <div id="info">
+      <div id="info-summary">
+        <span id="info-summary-text">No graph loaded.</span>
+        <button id="info-toggle" type="button" aria-expanded="false">+</button>
+      </div>
+      <div id="info-tree" class="hidden" role="tree"></div>
+    </div>
     <svg id="graph" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0"

@@ -75,6 +75,83 @@ var VSCodeAPIProvider = class _VSCodeAPIProvider {
     };
   }
   /**
+   * ファイル内で定義されている全関数を起点に Call Hierarchy を辿り、
+   * 1 つの統合コールグラフとして返す。
+   *
+   * 1. `vscode.executeDocumentSymbolProvider` でファイル内シンボルを取得
+   * 2. Function / Method / Constructor を平坦化して列挙
+   * 3. 各関数を起点に `traverse` を共有 nodes/edges に対して回す
+   *
+   * @param document 対象ファイル
+   * @param options 探索方向 / 最大深さ / 引数表示の有無
+   * @returns 統合済みの {@link CallGraphData}
+   * @throws ファイル内に Call Hierarchy 取得可能な関数が 1 つも無かった場合
+   */
+  async getFileCallGraphData(document, options) {
+    const symbols = await vscode.commands.executeCommand(
+      "vscode.executeDocumentSymbolProvider",
+      document.uri
+    ) ?? [];
+    const functionSymbols = _VSCodeAPIProvider.flattenFunctionSymbols(symbols);
+    if (functionSymbols.length === 0) {
+      throw new Error("No function symbols found in this file\u2026");
+    }
+    const nodes = /* @__PURE__ */ new Map();
+    const edges = [];
+    const visited = /* @__PURE__ */ new Set();
+    const edgeKeys = /* @__PURE__ */ new Set();
+    let firstRootId;
+    for (const sym of functionSymbols) {
+      const items = await vscode.commands.executeCommand(
+        "vscode.prepareCallHierarchy",
+        document.uri,
+        sym.selectionRange.start
+      );
+      if (!items || items.length === 0) {
+        continue;
+      }
+      const rootItem = items[0];
+      const rootId = _VSCodeAPIProvider.makeNodeId(rootItem);
+      if (firstRootId === void 0) {
+        firstRootId = rootId;
+      }
+      if (!nodes.has(rootId)) {
+        nodes.set(rootId, _VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
+      }
+      await this.traverse(rootItem, rootId, 0, options, nodes, edges, visited, edgeKeys);
+    }
+    if (firstRootId === void 0) {
+      throw new Error("No call hierarchy found for any function in this file\u2026");
+    }
+    const nodesArray = Array.from(nodes.values());
+    return {
+      rootNodeId: firstRootId,
+      direction: options.direction,
+      nodes: nodesArray,
+      edges,
+      files: _VSCodeAPIProvider.groupByFile(nodesArray)
+    };
+  }
+  /**
+   * `DocumentSymbol` ツリーを再帰的に走査し、関数とみなすシンボルだけを平坦化して返す。
+   * クラス配下の Method / Constructor も拾うため `children` を辿る。
+   */
+  static flattenFunctionSymbols(symbols) {
+    const out = [];
+    const walk = (list) => {
+      for (const s of list) {
+        if (s.kind === vscode.SymbolKind.Function || s.kind === vscode.SymbolKind.Method || s.kind === vscode.SymbolKind.Constructor) {
+          out.push(s);
+        }
+        if (s.children && s.children.length > 0) {
+          walk(s.children);
+        }
+      }
+    };
+    walk(symbols);
+    return out;
+  }
+  /**
    * `CallHierarchyItem` からノードの一意な ID を生成する。
    * 形式は `filePath::name::line:character`。
    * 同名の関数でもファイル・位置が違えば別ノードとして扱えるようにする。
@@ -405,6 +482,12 @@ function activate(context) {
       "CallGraphNavi.showIncoming",
       () => showGraphFromEditer("incoming")
     )
+    // vscode.commands.registerCommand('CallGraphNavi.showFileOutgoing', () =>
+    //   showFileGraphFromEditer('outgoing')
+    // ),
+    // vscode.commands.registerCommand('CallGraphNavi.showFileIncoming', () =>
+    //   showFileGraphFromEditer('incoming')
+    // )
   );
   const showGraphFromEditer = async (direction) => {
     const editor = vscode3.window.activeTextEditor;
@@ -418,6 +501,20 @@ function activate(context) {
         editor.selection.active,
         direction
       );
+    } catch (err) {
+      vscode3.window.showErrorMessage(
+        `Call Graph Navi: ${err.message}`
+      );
+    }
+  };
+  const showFileGraphFromEditer = async (direction) => {
+    const editor = vscode3.window.activeTextEditor;
+    if (!editor) {
+      vscode3.window.showWarningMessage("No active editor.");
+      return;
+    }
+    try {
+      await showFileGraphCommon(editor.document, direction);
     } catch (err) {
       vscode3.window.showErrorMessage(
         `Call Graph Navi: ${err.message}`
@@ -451,6 +548,25 @@ function activate(context) {
       },
       async () => {
         const data = await provider.getCallGraphData(document, position, options);
+        webviewManager.updateWebview(data, options);
+      }
+    );
+  };
+  const showFileGraphCommon = async (document, direction) => {
+    const config = vscode3.workspace.getConfiguration("CallGraphNavi");
+    const maxDepth = config.get("maxDepth", 0);
+    const showArguments = config.get("showArguments", false);
+    const graphOrientation = config.get("graphOrientation", "Vertical");
+    const pngExportScale = config.get("pngExportScale", "4x");
+    const options = { direction, maxDepth, showArguments, graphOrientation, pngExportScale };
+    await vscode3.window.withProgress(
+      {
+        location: vscode3.ProgressLocation.Notification,
+        title: `Building file ${direction} call graph...`,
+        cancellable: false
+      },
+      async () => {
+        const data = await provider.getFileCallGraphData(document, options);
         webviewManager.updateWebview(data, options);
       }
     );

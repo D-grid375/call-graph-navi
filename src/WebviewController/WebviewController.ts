@@ -48,6 +48,7 @@ import {
 } from './feature/nodeInteraction/nodeContextMenu';
 import { handleFolderClick } from './feature/nodeInteraction/folderInteraction';
 import { handleNodeRemoveClick } from './feature/nodeInteraction/nodeRemove';
+import { setupInfoTreeToggle } from './feature/infoTree';
 import {
   handleSearchInputKeyDown,
   handleSearchNextClick,
@@ -65,6 +66,9 @@ import { renderGraph } from './feature/render';
 import { restoreState, setViewModel } from './core/state';
 import { applyTransform, resetView } from './core/viewport';
 import { createGraphViewModel } from './feature/viewModel';
+
+// info パネルのアコーディオントグル初期化
+setupInfoTreeToggle();
 
 // ウィンドウ切り出し等で Webview が再生成された場合、前回の状態を復元する
 if (restoreState()) {

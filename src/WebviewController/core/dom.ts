@@ -16,6 +16,9 @@ export const contextMenuShowPathToRoot = document.getElementById(
   'node-context-menu-show-path-to-root'
 ) as HTMLButtonElement;
 export const info = document.getElementById('info') as HTMLElement;
+export const infoSummaryText = document.getElementById('info-summary-text') as HTMLElement;
+export const infoToggle = document.getElementById('info-toggle') as HTMLButtonElement;
+export const infoTree = document.getElementById('info-tree') as HTMLElement;
 export const btnReset = document.getElementById('btn-reset') as HTMLButtonElement;
 export const btnShowAll = document.getElementById('btn-show-all') as HTMLButtonElement;
 export const btnHideAll = document.getElementById('btn-hide-all') as HTMLButtonElement;

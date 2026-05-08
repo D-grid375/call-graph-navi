@@ -1,4 +1,5 @@
-import { info, tooltip, viewport } from '../core/dom';
+import { infoSummaryText, tooltip, viewport } from '../core/dom';
+import { clearInfoTree, renderInfoTree } from './infoTree';
 import {
   getViewModel,
   getUiState,
@@ -45,7 +46,8 @@ const NODE_REMOVE_BUTTON_AREA =
 export function renderGraph(resetViewport: boolean): void {
   const vm = getViewModel();
   if (!vm) {
-    info.textContent = 'No graph loaded.';
+    infoSummaryText.textContent = 'No graph loaded.';
+    clearInfoTree();
     clearViewport();
     setLayoutPositions(new Map());
     return;
@@ -86,12 +88,14 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
     file.nodeIds.some((nodeId) => visibleNodeIds.has(nodeId))
   );
 
-  info.textContent =
+  infoSummaryText.textContent =
     // `Mode: ${formatModeLabel(uiState.mode)} | ` +
     `Direction: ${viewModel.direction}  |  ` +
     `Visible Nodes: ${visibleNodes.length}/${viewModel.nodes.length}  |  ` +
     // `Visible Edges: ${visibleEdges.length}/${viewModel.edges.length} | ` +
     `Visible Files: ${visibleFiles.length}/${viewModel.files.length}`;
+
+  renderInfoTree(viewModel);
 
   clearViewport();
 

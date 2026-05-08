@@ -16,6 +16,9 @@
     "node-context-menu-show-path-to-root"
   );
   var info = document.getElementById("info");
+  var infoSummaryText = document.getElementById("info-summary-text");
+  var infoToggle = document.getElementById("info-toggle");
+  var infoTree = document.getElementById("info-tree");
   var btnReset = document.getElementById("btn-reset");
   var btnShowAll = document.getElementById("btn-show-all");
   var btnHideAll = document.getElementById("btn-hide-all");
@@ -112,6 +115,122 @@
     };
     const option = getExtensionOptions().pngExportScale;
     return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
+  }
+
+  // src/WebviewController/feature/infoTree.ts
+  var expanded = false;
+  function setupInfoTreeToggle() {
+    applyExpandedState();
+    infoToggle.addEventListener("click", () => {
+      expanded = !expanded;
+      applyExpandedState();
+    });
+  }
+  function applyExpandedState() {
+    if (expanded) {
+      infoTree.classList.remove("hidden");
+      infoToggle.textContent = "-";
+      infoToggle.setAttribute("aria-expanded", "true");
+    } else {
+      infoTree.classList.add("hidden");
+      infoToggle.textContent = "+";
+      infoToggle.setAttribute("aria-expanded", "false");
+    }
+  }
+  function clearInfoTree() {
+    while (infoTree.firstChild) {
+      infoTree.removeChild(infoTree.firstChild);
+    }
+  }
+  function renderInfoTree(vm) {
+    const previousFileChecks = collectChecks(".info-tree-checkbox-file", "filePath");
+    const previousNodeChecks = collectChecks(".info-tree-checkbox-node", "nodeId");
+    clearInfoTree();
+    const nodesById = /* @__PURE__ */ new Map();
+    for (const node of vm.nodes) {
+      nodesById.set(node.id, node);
+    }
+    const sortedFiles = sortFiles(vm.files, vm.rootNodeId);
+    for (const file of sortedFiles) {
+      const fileEl = document.createElement("div");
+      fileEl.className = "info-tree-file";
+      fileEl.dataset.filePath = file.filePath;
+      const fileRow = document.createElement("label");
+      fileRow.className = "info-tree-row";
+      const fileCheckbox = document.createElement("input");
+      fileCheckbox.type = "checkbox";
+      fileCheckbox.className = "info-tree-checkbox info-tree-checkbox-file";
+      fileCheckbox.dataset.filePath = file.filePath;
+      fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? true;
+      fileRow.appendChild(fileCheckbox);
+      const fileLabel = document.createElement("span");
+      fileLabel.className = "info-tree-label";
+      fileLabel.textContent = file.displayName;
+      fileRow.appendChild(fileLabel);
+      fileEl.appendChild(fileRow);
+      const nodeListEl = document.createElement("div");
+      nodeListEl.className = "info-tree-node-list";
+      const nodes = file.nodeIds.map((id) => nodesById.get(id)).filter((n) => n !== void 0);
+      const sortedNodes = sortNodes(nodes, vm.rootNodeId);
+      for (const node of sortedNodes) {
+        const nodeRow = document.createElement("label");
+        nodeRow.className = "info-tree-row";
+        const nodeCheckbox = document.createElement("input");
+        nodeCheckbox.type = "checkbox";
+        nodeCheckbox.className = "info-tree-checkbox info-tree-checkbox-node";
+        nodeCheckbox.dataset.nodeId = node.id;
+        nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? true;
+        nodeRow.appendChild(nodeCheckbox);
+        const nodeLabel = document.createElement("span");
+        nodeLabel.className = "info-tree-label";
+        nodeLabel.textContent = node.name;
+        nodeRow.appendChild(nodeLabel);
+        nodeListEl.appendChild(nodeRow);
+      }
+      fileEl.appendChild(nodeListEl);
+      infoTree.appendChild(fileEl);
+    }
+  }
+  function sortFiles(files, rootNodeId) {
+    const rootFiles = [];
+    const others = [];
+    for (const file of files) {
+      if (file.nodeIds.includes(rootNodeId)) {
+        rootFiles.push(file);
+      } else {
+        others.push(file);
+      }
+    }
+    const byName = (a, b) => a.displayName.localeCompare(b.displayName) || a.filePath.localeCompare(b.filePath);
+    rootFiles.sort(byName);
+    others.sort(byName);
+    return [...rootFiles, ...others];
+  }
+  function sortNodes(nodes, rootNodeId) {
+    const rootNodes = [];
+    const others = [];
+    for (const node of nodes) {
+      if (node.id === rootNodeId) {
+        rootNodes.push(node);
+      } else {
+        others.push(node);
+      }
+    }
+    others.sort(
+      (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)
+    );
+    return [...rootNodes, ...others];
+  }
+  function collectChecks(selector, datasetKey) {
+    const result = /* @__PURE__ */ new Map();
+    const elements = infoTree.querySelectorAll(selector);
+    elements.forEach((el) => {
+      const key = el.dataset[datasetKey];
+      if (key !== void 0) {
+        result.set(key, el.checked);
+      }
+    });
+    return result;
   }
 
   // src/WebviewController/core/util.ts
@@ -218,7 +337,8 @@
   function renderGraph(resetViewport) {
     const vm = getViewModel();
     if (!vm) {
-      info.textContent = "No graph loaded.";
+      infoSummaryText.textContent = "No graph loaded.";
+      clearInfoTree();
       clearViewport();
       setLayoutPositions(/* @__PURE__ */ new Map());
       return;
@@ -238,8 +358,9 @@
     const visibleFiles = viewModel.files.filter(
       (file) => file.nodeIds.some((nodeId) => visibleNodeIds.has(nodeId))
     );
-    info.textContent = // `Mode: ${formatModeLabel(uiState.mode)} | ` +
+    infoSummaryText.textContent = // `Mode: ${formatModeLabel(uiState.mode)} | ` +
     `Direction: ${viewModel.direction}  |  Visible Nodes: ${visibleNodes.length}/${viewModel.nodes.length}  |  Visible Files: ${visibleFiles.length}/${viewModel.files.length}`;
+    renderInfoTree(viewModel);
     clearViewport();
     if (visibleNodes.length === 0) {
       setLayoutPositions(/* @__PURE__ */ new Map());
@@ -1256,6 +1377,7 @@ Click: open source`;
   }
 
   // src/WebviewController/WebviewController.ts
+  setupInfoTreeToggle();
   if (restoreState()) {
     renderGraph(false);
     applyTransform();
