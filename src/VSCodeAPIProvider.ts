@@ -60,6 +60,97 @@ export class VSCodeAPIProvider {
   }
 
   /**
+   * ファイル内で定義されている全関数を起点に Call Hierarchy を辿り、
+   * 1 つの統合コールグラフとして返す。
+   *
+   * 1. `vscode.executeDocumentSymbolProvider` でファイル内シンボルを取得
+   * 2. Function / Method / Constructor を平坦化して列挙
+   * 3. 各関数を起点に `traverse` を共有 nodes/edges に対して回す
+   *
+   * @param document 対象ファイル
+   * @param options 探索方向 / 最大深さ / 引数表示の有無
+   * @returns 統合済みの {@link CallGraphData}
+   * @throws ファイル内に Call Hierarchy 取得可能な関数が 1 つも無かった場合
+   */
+  async getFileCallGraphData(
+    document: vscode.TextDocument,
+    options: ExtensionOptions
+  ): Promise<CallGraphData> {
+    const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+      'vscode.executeDocumentSymbolProvider', document.uri
+    ) ?? [];
+
+    const functionSymbols = VSCodeAPIProvider.flattenFunctionSymbols(symbols);
+    if (functionSymbols.length === 0) {
+      throw new Error('No function symbols found in this file…');
+    }
+
+    const nodes = new Map<string, GraphNode>();
+    const edges: GraphEdge[] = [];
+    const visited = new Set<string>();
+    const edgeKeys = new Set<string>();
+    let firstRootId: string | undefined;
+
+    for (const sym of functionSymbols) {
+      const items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>(
+        'vscode.prepareCallHierarchy', document.uri, sym.selectionRange.start
+      );
+      if (!items || items.length === 0) {
+        continue;
+      }
+
+      const rootItem = items[0];
+      const rootId = VSCodeAPIProvider.makeNodeId(rootItem);
+      if (firstRootId === undefined) {
+        firstRootId = rootId;
+      }
+
+      if (!nodes.has(rootId)) {
+        nodes.set(rootId, VSCodeAPIProvider.toGraphNode(rootItem, true, options.showArguments));
+      }
+
+      await this.traverse(rootItem, rootId, 0, options, nodes, edges, visited, edgeKeys);
+    }
+
+    if (firstRootId === undefined) {
+      throw new Error('No call hierarchy found for any function in this file…');
+    }
+
+    const nodesArray = Array.from(nodes.values());
+    return {
+      rootNodeId: firstRootId,
+      direction: options.direction,
+      nodes: nodesArray,
+      edges,
+      files: VSCodeAPIProvider.groupByFile(nodesArray),
+    };
+  }
+
+  /**
+   * `DocumentSymbol` ツリーを再帰的に走査し、関数とみなすシンボルだけを平坦化して返す。
+   * クラス配下の Method / Constructor も拾うため `children` を辿る。
+   */
+  private static flattenFunctionSymbols(symbols: vscode.DocumentSymbol[]): vscode.DocumentSymbol[] {
+    const out: vscode.DocumentSymbol[] = [];
+    const walk = (list: vscode.DocumentSymbol[]) => {
+      for (const s of list) {
+        if (
+          s.kind === vscode.SymbolKind.Function ||
+          s.kind === vscode.SymbolKind.Method ||
+          s.kind === vscode.SymbolKind.Constructor
+        ) {
+          out.push(s);
+        }
+        if (s.children && s.children.length > 0) {
+          walk(s.children);
+        }
+      }
+    };
+    walk(symbols);
+    return out;
+  }
+
+  /**
    * `CallHierarchyItem` からノードの一意な ID を生成する。
    * 形式は `filePath::name::line:character`。
    * 同名の関数でもファイル・位置が違えば別ノードとして扱えるようにする。

@@ -46,7 +46,13 @@ export function activate(context: vscode.ExtensionContext) {
     ),
     vscode.commands.registerCommand('CallGraphNavi.showIncoming', () =>
       showGraphFromEditer('incoming')
-    )
+    ),
+    // vscode.commands.registerCommand('CallGraphNavi.showFileOutgoing', () =>
+    //   showFileGraphFromEditer('outgoing')
+    // ),
+    // vscode.commands.registerCommand('CallGraphNavi.showFileIncoming', () =>
+    //   showFileGraphFromEditer('incoming')
+    // )
   );
 
   /**
@@ -70,6 +76,29 @@ export function activate(context: vscode.ExtensionContext) {
         editor.selection.active,
         direction
       );
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Call Graph Navi: ${(err as Error).message}`
+      );
+    }
+  };
+
+  /**
+   * コマンド実行時のエントリ関数（ファイル単位）。
+   * アクティブなエディタのファイル内で定義された全関数を起点に、
+   * 統合されたコールグラフを {@link showFileGraphCommon} で構築・表示する。
+   *
+   * @param direction 'outgoing' / 'incoming'（呼び出し先／呼び出し元方向）
+   */
+  const showFileGraphFromEditer = async (direction: 'outgoing' | 'incoming') => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('No active editor.');
+      return;
+    }
+
+    try {
+      await showFileGraphCommon(editor.document, direction);
     } catch (err) {
       vscode.window.showErrorMessage(
         `Call Graph Navi: ${(err as Error).message}`
@@ -136,6 +165,38 @@ export function activate(context: vscode.ExtensionContext) {
         // グラフデータ取得
         const data = await provider.getCallGraphData(document, position, options);
         // データをManagerに渡してグラフ更新
+        webviewManager.updateWebview(data, options);
+      }
+    );
+  };
+
+  /**
+   * ファイル内の全関数を起点に統合コールグラフを構築して WebviewPanel に表示する。
+   * 設定値（maxDepth, showArguments）を読み出し、進捗通知を出しながら
+   * Provider で取得 → PanelManager で表示、までを一括で行う。
+   *
+   * @param document 対象ファイル
+   * @param direction 'outgoing' = 呼び出し先方向 / 'incoming' = 呼び出し元方向
+   */
+  const showFileGraphCommon = async (
+    document: vscode.TextDocument,
+    direction: 'outgoing' | 'incoming'
+  ) => {
+    const config = vscode.workspace.getConfiguration('CallGraphNavi');
+    const maxDepth = config.get<number>('maxDepth', 0);
+    const showArguments = config.get<boolean>('showArguments', false);
+    const graphOrientation = config.get<string>('graphOrientation', "Vertical");
+    const pngExportScale = config.get<string>('pngExportScale', "4x");
+    const options: ExtensionOptions = { direction, maxDepth, showArguments, graphOrientation, pngExportScale };
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Building file ${direction} call graph...`,
+        cancellable: false,
+      },
+      async () => {
+        const data = await provider.getFileCallGraphData(document, options);
         webviewManager.updateWebview(data, options);
       }
     );
