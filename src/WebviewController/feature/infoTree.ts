@@ -1,6 +1,11 @@
 import { infoToggle, infoTree } from '../core/dom';
+import { getViewModel } from '../core/state';
 import type { GraphViewModel, NodeVM } from '../core/types';
 import type { FileGroup } from '../../shared/types';
+import { fileRemoveFromVM } from './nodeInteraction/folderInteraction';
+import { nodeRemoveFromVM } from './nodeInteraction/nodeRemove';
+import { unhideNode, unhideFile, pruneUnreachableFromRoot } from './nodeInteraction/visibilityOps';
+import { renderGraph } from './render';
 
 let expanded = false;
 
@@ -21,6 +26,58 @@ function applyExpandedState(): void {
     infoTree.classList.add('hidden');
     infoToggle.textContent = '+';
     infoToggle.setAttribute('aria-expanded', 'false');
+  }
+}
+
+export function handleInfoTreeFileClick(event: MouseEvent): void {
+  const target = event.target as Element | null;
+  const checkbox = target?.closest(
+    '.info-tree-checkbox-file'
+  ) as HTMLInputElement | null;
+  if (!checkbox) {
+    return;
+  }
+  const filePath = checkbox.dataset.filePath;
+  if (!filePath) {
+    return;
+  }
+
+  if (checkbox.checked) {
+    // 再表示処理
+    const vm = getViewModel();
+    if (!vm) { return; }
+    unhideFile(vm, filePath);
+    pruneUnreachableFromRoot(vm);
+    renderGraph(false);
+  } else {
+    // 非表示処理
+    fileRemoveFromVM(filePath);
+  }
+}
+
+export function handleInfoTreeNodeClick(event: MouseEvent): void {
+  const target = event.target as Element | null;
+  const checkbox = target?.closest(
+    '.info-tree-checkbox-node'
+  ) as HTMLInputElement | null;
+  if (!checkbox) {
+    return;
+  }
+  const nodeId = checkbox.dataset.nodeId;
+  if (!nodeId) {
+    return;
+  }
+
+  if (checkbox.checked) {
+    // 再表示処理
+    const vm = getViewModel();
+    if (!vm) { return; }
+    unhideNode(vm, nodeId);
+    pruneUnreachableFromRoot(vm);
+    renderGraph(false);
+  } else {
+    // 非表示処理
+    nodeRemoveFromVM(nodeId);
   }
 }
 
@@ -55,7 +112,7 @@ export function renderInfoTree(vm: GraphViewModel): void {
     fileCheckbox.type = 'checkbox';
     fileCheckbox.className = 'info-tree-checkbox info-tree-checkbox-file';
     fileCheckbox.dataset.filePath = file.filePath;
-    fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? true;
+    fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? false;
     fileRow.appendChild(fileCheckbox);
 
     const fileLabel = document.createElement('span');
@@ -81,7 +138,7 @@ export function renderInfoTree(vm: GraphViewModel): void {
       nodeCheckbox.type = 'checkbox';
       nodeCheckbox.className = 'info-tree-checkbox info-tree-checkbox-node';
       nodeCheckbox.dataset.nodeId = node.id;
-      nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? true;
+      nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
       nodeRow.appendChild(nodeCheckbox);
 
       const nodeLabel = document.createElement('span');
@@ -95,6 +152,40 @@ export function renderInfoTree(vm: GraphViewModel): void {
     fileEl.appendChild(nodeListEl);
     infoTree.appendChild(fileEl);
   }
+
+  applyVisibleChecks(vm);
+}
+
+function applyVisibleChecks(vm: GraphViewModel): void {
+  const visibleNodes = vm.nodes.filter(
+    (node) => node.view.visibility === 'visible'
+  );
+  const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+  const visibleFilePaths = new Set(
+    vm.files
+      .filter((file) => file.nodeIds.some((nodeId) => visibleNodeIds.has(nodeId)))
+      .map((file) => file.filePath)
+  );
+
+  const nodeCheckboxes = infoTree.querySelectorAll<HTMLInputElement>(
+    '.info-tree-checkbox-node'
+  );
+  nodeCheckboxes.forEach((el) => {
+    const id = el.dataset.nodeId;
+    if (id !== undefined) {
+      el.checked = visibleNodeIds.has(id);
+    }
+  });
+
+  const fileCheckboxes = infoTree.querySelectorAll<HTMLInputElement>(
+    '.info-tree-checkbox-file'
+  );
+  fileCheckboxes.forEach((el) => {
+    const path = el.dataset.filePath;
+    if (path !== undefined) {
+      el.checked = visibleFilePaths.has(path);
+    }
+  });
 }
 
 function sortFiles(files: FileGroup[], rootNodeId: string): FileGroup[] {

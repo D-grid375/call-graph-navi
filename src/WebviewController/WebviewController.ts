@@ -16,6 +16,7 @@ import {
   contextMenuIncoming,
   contextMenuOutgoing,
   contextMenuShowPathToRoot,
+  infoTree,
   searchInput,
   svg,
   viewport,
@@ -48,7 +49,11 @@ import {
 } from './feature/nodeInteraction/nodeContextMenu';
 import { handleFolderClick } from './feature/nodeInteraction/folderInteraction';
 import { handleNodeRemoveClick } from './feature/nodeInteraction/nodeRemove';
-import { setupInfoTreeToggle } from './feature/infoTree';
+import {
+  handleInfoTreeFileClick,
+  handleInfoTreeNodeClick,
+  setupInfoTreeToggle,
+} from './feature/infoTree';
 import {
   handleSearchInputKeyDown,
   handleSearchNextClick,
@@ -119,6 +124,10 @@ viewport.addEventListener('click', handleFolderClick);
 
 // ノード×ボタン左クリックイベント
 viewport.addEventListener('click', handleNodeRemoveClick);
+
+// info ツリーのファイル／ノードクリックイベント
+infoTree.addEventListener('click', handleInfoTreeFileClick);
+infoTree.addEventListener('click', handleInfoTreeNodeClick);
 
 // パン・ズームイベント
 viewport.addEventListener('mousedown', handleViewportMouseDown);

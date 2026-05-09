@@ -27,6 +27,12 @@ export function handleFolderClick(event: MouseEvent): void {
     return;
   }
 
+  event.stopPropagation();
+  hideNodeContextMenu();
+  fileRemoveFromVM(filePath);
+}
+
+export function fileRemoveFromVM(filePath: string): void {
   const vm = getViewModel();
   if (!vm) {
     return;
@@ -36,9 +42,6 @@ export function handleFolderClick(event: MouseEvent): void {
   if (removedNodeIds.size === 0 || removedNodeIds.has(vm.rootNodeId)) {
     return;
   }
-
-  event.stopPropagation();
-  hideNodeContextMenu();
 
   hideNodes(vm, removedNodeIds);
   pruneUnreachableFromRoot(vm);
@@ -54,7 +57,7 @@ export function handleFolderClick(event: MouseEvent): void {
  * @param filePath 閉じたいファイルのパス
  * @returns 非表示化対象ノード ID の集合
  */
-function collectRemovedNodeIds(
+export function collectRemovedNodeIds(
   vm: GraphViewModel,
   filePath: string
 ): Set<string> {

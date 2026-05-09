@@ -17,12 +17,18 @@ export function handleNodeRemoveClick(event: MouseEvent): void {
   if (!button) {
     return;
   }
-
+  
   const nodeId = button.dataset.nodeId;
   if (!nodeId) {
     return;
   }
 
+  event.stopPropagation();
+  hideNodeContextMenu();
+  nodeRemoveFromVM(nodeId);
+}
+
+export function nodeRemoveFromVM(nodeId: string): void {
   const vm = getViewModel();
   if (!vm) {
     return;
@@ -31,9 +37,6 @@ export function handleNodeRemoveClick(event: MouseEvent): void {
   if (nodeId === vm.rootNodeId) {
     return;
   }
-
-  event.stopPropagation();
-  hideNodeContextMenu();
 
   hideNodes(vm, new Set([nodeId]));
   pruneUnreachableFromRoot(vm);

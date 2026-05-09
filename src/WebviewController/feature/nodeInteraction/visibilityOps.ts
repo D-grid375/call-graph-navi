@@ -1,4 +1,46 @@
 import type { EdgeVM, GraphViewModel } from '../../core/types';
+import { collectRemovedNodeIds } from './folderInteraction'
+
+export function unhideFile(vm: GraphViewModel, filePath: string): void {
+  const unhideNodeIds = collectRemovedNodeIds(vm, filePath);
+  if (unhideNodeIds.size === 0) { return; }
+
+  for (const nodeId of unhideNodeIds) {
+    unhideNode(vm, nodeId);
+  }
+}
+
+export function unhideNode(vm: GraphViewModel, nodeId: string): void {
+  // ノード表示
+  for (const node of vm.nodes) {
+    if (nodeId === node.id) {
+      node.view.visibility = 'visible';
+    }
+  }
+
+  // ノードからルート方向に延びるエッジを抽出
+  var matchingEdges;
+  if (vm.direction === 'incoming') {
+    matchingEdges = vm.edges.filter((edge) => edge.from === nodeId);
+  } else {
+    matchingEdges = vm.edges.filter((edge) => edge.to === nodeId);
+  }
+
+  // エッジから隣接ノードを取得し再帰的に表示有効化
+  for (const edge of matchingEdges) {
+    edge.view.visibility = 'visible'; // エッジは必ず非表示中なので無条件で再表示
+
+    var targetNode; // エッジが持つルート側のノード
+    if (vm.direction === 'incoming') {
+      targetNode = vm.nodes.find((node) => node.id === edge.to);
+    } else {
+      targetNode = vm.nodes.find((node) => node.id === edge.from);
+    }
+    if (targetNode && targetNode.view.visibility === 'hidden') {
+      unhideNode(vm, targetNode.id);
+    }
+  }
+}
 
 /**
  * 指定ノード ID 集合に含まれるノードを `hidden`・非選択にし、
