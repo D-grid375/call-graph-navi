@@ -1,5 +1,5 @@
 import { viewport, tooltip } from './dom';
-import type { NodeVM, UiMode } from './types';
+import type { NodeVM } from './types';
 
 export const NODE_LABEL_MARGIN_LEFT = 12;
 export const NODE_LABEL_MARGIN_RIGHT = 12;
@@ -45,16 +45,6 @@ export function buildNodeClassName(node: NodeVM): string {
     classNames.push('matched');
   }
   return classNames.join(' ');
-}
-
-/**
- * UI モードを情報ラベル用の表示文字列に変換する。
- *
- * @param mode 現在の UI モード
- * @returns ユーザ向けラベル文字列
- */
-export function formatModeLabel(mode: UiMode): string {
-  return 'Normal';
 }
 
 /**

@@ -1,10 +1,9 @@
 import { vscode } from './dom';
-import type { GraphViewModel, SearchState, Transform, UiState } from './types';
+import type { GraphViewModel, SearchState, Transform } from './types';
 import { ExtensionOptions } from '../../shared/types';
 
 let currentGraphViewModel: GraphViewModel | null = null;
 let currentTransform: Transform = { x: 0, y: 0, scale: 1 };
-const uiState: UiState = { mode: 'normal' };
 let layoutPositions: Map<string, { x: number; y: number }> = new Map();
 let searchState: SearchState = { query: '', hitIds: [], currentIndex: -1 };
 let currentOptions: ExtensionOptions;
@@ -12,7 +11,6 @@ let currentOptions: ExtensionOptions;
 interface PersistedState {
   viewModel: GraphViewModel | null;
   transform: Transform;
-  uiState: UiState;
   options: ExtensionOptions;
 }
 
@@ -25,7 +23,6 @@ export function persistState(): void {
   const snapshot: PersistedState = {
     viewModel: currentGraphViewModel,
     transform: currentTransform,
-    uiState: { ...uiState },
     options: currentOptions
   };
   vscode.setState(snapshot);
@@ -44,7 +41,6 @@ export function restoreState(): boolean {
   }
   currentGraphViewModel = snapshot.viewModel;
   currentTransform = snapshot.transform;
-  uiState.mode = snapshot.uiState.mode;
   currentOptions = snapshot.options;
   return true;
 }
@@ -88,17 +84,6 @@ export function getTransform(): Transform {
 export function setTransform(t: Transform): void {
   currentTransform = t;
   persistState();
-}
-
-/**
- * UI 状態（`mode` など）のオブジェクトを取得する。
- * 返されるオブジェクトは内部で保持している参照そのものなので、
- * フィールドへの破壊的更新で状態が変化する。
- *
- * @returns 共有されている `UiState` オブジェクト
- */
-export function getUiState(): UiState {
-  return uiState;
 }
 
 /**

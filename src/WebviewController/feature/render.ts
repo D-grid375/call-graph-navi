@@ -2,7 +2,6 @@ import { infoSummaryText, tooltip, viewport } from '../core/dom';
 import { clearInfoTree, renderInfoTree } from './infoTree';
 import {
   getViewModel,
-  getUiState,
   persistState,
   setLayoutPositions,
   getGraphOrientation,
@@ -12,7 +11,6 @@ import {
   buildNodeClassName,
   clearViewport,
   estimateWidth,
-  formatModeLabel,
   makeEdgeId,
   NODE_LABEL_MARGIN_LEFT,
   NODE_LABEL_MARGIN_RIGHT,
@@ -73,7 +71,6 @@ export function renderGraph(resetViewport: boolean): void {
  * @param resetViewport true なら描画後にビューポート変換を初期化する
  */
 function render(viewModel: GraphViewModel, resetViewport: boolean): void {
-  const uiState = getUiState();
   const visibleNodes = viewModel.nodes.filter(
     (node) => node.view.visibility === 'visible'
   );
@@ -89,10 +86,8 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
   );
 
   infoSummaryText.textContent =
-    // `Mode: ${formatModeLabel(uiState.mode)} | ` +
     `Direction: ${viewModel.direction}  |  ` +
     `Visible Nodes: ${visibleNodes.length}/${viewModel.nodes.length}  |  ` +
-    // `Visible Edges: ${visibleEdges.length}/${viewModel.edges.length} | ` +
     `Visible Files: ${visibleFiles.length}/${viewModel.files.length}`;
 
   renderInfoTree(viewModel);

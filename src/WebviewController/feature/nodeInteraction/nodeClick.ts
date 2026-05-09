@@ -1,7 +1,4 @@
 import { vscode } from '../../core/dom';
-import { applyPathVisualization } from './pathVisualization';
-import { renderGraph } from '../render';
-import { getUiState } from '../../core/state';
 import type { GraphViewModel, NodeVM } from '../../core/types';
 
 /**
@@ -30,28 +27,6 @@ export function handleNodeClick(
       line: node.line,
       character: node.character,
     });
-    /* モード別処理は無効化中 */
-    /*
-    // モード共通処理
-    selectNode(vm, node.id);
-    // モード別処理
-    const mode = getUiState().mode;
-    if (mode === 'normal') {
-      renderGraph(false);
-    }
-    */
   }
 }
 
-/**
- * 指定 ID のノードだけを選択状態（`view.selected = true`）にし、それ以外を非選択にする。
- *
- * @param vm 対象の `GraphViewModel`
- * @param selectedNodeId 選択したいノードの ID
- */
-function selectNode(vm: GraphViewModel, selectedNodeId: string): void {
-  // 選択ノードのみselected=true、それ以外はfalseにする
-  for (const node of vm.nodes) {
-    node.view.selected = node.id === selectedNodeId;
-  }
-}

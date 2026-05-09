@@ -1,7 +1,5 @@
 import type { CallGraphData, GraphNode, FileGroup } from '../../shared/types';
 
-export type UiMode = 'normal';
-
 export interface NodeViewState {
   visibility: 'visible' | 'hidden';
   selected: boolean;
@@ -43,10 +41,6 @@ export interface Transform {
   x: number;
   y: number;
   scale: number;
-}
-
-export interface UiState {
-  mode: UiMode;
 }
 
 export interface VsCodeApi {

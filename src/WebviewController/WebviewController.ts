@@ -87,7 +87,6 @@ window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'updateGraph') {
     updateExtensionOptions(event.data.extensionOptions);       // 拡張機能設定値更新：グラフ描画に設定値を参照するため先にコール必要
     setViewModel(createGraphViewModel(event.data.graphData));  // 生データからViewModelを生成
-    hideNodeContextMenu();                                     // 前の画面で開いていたノードのコンテキストメニューが残っている可能性があるので閉じる
     renderGraph(true);                                         // ViewModelからグラフ描画
   }
 });

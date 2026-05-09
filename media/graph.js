@@ -29,7 +29,6 @@
   // src/WebviewController/core/state.ts
   var currentGraphViewModel = null;
   var currentTransform = { x: 0, y: 0, scale: 1 };
-  var uiState = { mode: "normal" };
   var layoutPositions = /* @__PURE__ */ new Map();
   var searchState = { query: "", hitIds: [], currentIndex: -1 };
   var currentOptions;
@@ -37,7 +36,6 @@
     const snapshot = {
       viewModel: currentGraphViewModel,
       transform: currentTransform,
-      uiState: { ...uiState },
       options: currentOptions
     };
     vscode.setState(snapshot);
@@ -49,7 +47,6 @@
     }
     currentGraphViewModel = snapshot.viewModel;
     currentTransform = snapshot.transform;
-    uiState.mode = snapshot.uiState.mode;
     currentOptions = snapshot.options;
     return true;
   }
@@ -66,9 +63,6 @@
   function setTransform(t) {
     currentTransform = t;
     persistState();
-  }
-  function getUiState() {
-    return uiState;
   }
   function getLayoutPosition(nodeId) {
     return layoutPositions.get(nodeId);
@@ -717,7 +711,6 @@
     persistState();
   }
   function render(viewModel, resetViewport) {
-    const uiState2 = getUiState();
     const visibleNodes = viewModel.nodes.filter(
       (node) => node.view.visibility === "visible"
     );
@@ -728,8 +721,7 @@
     const visibleFiles = viewModel.files.filter(
       (file) => file.nodeIds.some((nodeId) => visibleNodeIds.has(nodeId))
     );
-    infoSummaryText.textContent = // `Mode: ${formatModeLabel(uiState.mode)} | ` +
-    `Direction: ${viewModel.direction}  |  Visible Nodes: ${visibleNodes.length}/${viewModel.nodes.length}  |  Visible Files: ${visibleFiles.length}/${viewModel.files.length}`;
+    infoSummaryText.textContent = `Direction: ${viewModel.direction}  |  Visible Nodes: ${visibleNodes.length}/${viewModel.nodes.length}  |  Visible Files: ${visibleFiles.length}/${viewModel.files.length}`;
     renderInfoTree(viewModel);
     clearViewport();
     if (visibleNodes.length === 0) {
@@ -1496,7 +1488,6 @@ Click: open source`;
     if (event.data && event.data.type === "updateGraph") {
       updateExtensionOptions(event.data.extensionOptions);
       setViewModel(createGraphViewModel(event.data.graphData));
-      hideNodeContextMenu();
       renderGraph(true);
     }
   });
