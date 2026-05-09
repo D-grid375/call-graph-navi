@@ -6,15 +6,9 @@
   var viewport = document.getElementById("viewport");
   var tooltip = document.getElementById("tooltip");
   var contextMenu = document.getElementById("node-context-menu");
-  var contextMenuOutgoing = document.getElementById(
-    "node-context-menu-outgoing"
-  );
-  var contextMenuIncoming = document.getElementById(
-    "node-context-menu-incoming"
-  );
-  var contextMenuShowPathToRoot = document.getElementById(
-    "node-context-menu-show-path-to-root"
-  );
+  var contextMenuOutgoing = document.getElementById("node-context-menu-outgoing");
+  var contextMenuIncoming = document.getElementById("node-context-menu-incoming");
+  var contextMenuShowPathToRoot = document.getElementById("node-context-menu-show-path-to-root");
   var info = document.getElementById("info");
   var infoSummaryText = document.getElementById("info-summary-text");
   var infoToggle = document.getElementById("info-toggle");

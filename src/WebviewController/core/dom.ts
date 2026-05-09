@@ -6,15 +6,9 @@ export const svg = document.getElementById('graph') as unknown as SVGSVGElement;
 export const viewport = document.getElementById('viewport') as unknown as SVGGElement;
 export const tooltip = document.getElementById('tooltip') as HTMLElement;
 export const contextMenu = document.getElementById('node-context-menu') as HTMLDivElement;
-export const contextMenuOutgoing = document.getElementById(
-  'node-context-menu-outgoing'
-) as HTMLButtonElement;
-export const contextMenuIncoming = document.getElementById(
-  'node-context-menu-incoming'
-) as HTMLButtonElement;
-export const contextMenuShowPathToRoot = document.getElementById(
-  'node-context-menu-show-path-to-root'
-) as HTMLButtonElement;
+export const contextMenuOutgoing = document.getElementById('node-context-menu-outgoing') as HTMLButtonElement;
+export const contextMenuIncoming = document.getElementById('node-context-menu-incoming') as HTMLButtonElement;
+export const contextMenuShowPathToRoot = document.getElementById('node-context-menu-show-path-to-root') as HTMLButtonElement;
 export const info = document.getElementById('info') as HTMLElement;
 export const infoSummaryText = document.getElementById('info-summary-text') as HTMLElement;
 export const infoToggle = document.getElementById('info-toggle') as HTMLButtonElement;
