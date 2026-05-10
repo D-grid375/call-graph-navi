@@ -1,10 +1,10 @@
 import type { ExtensionOptions } from '../../shared/types';
 import { vscode } from '../common/types';
 import { getExtensionOptions, updateExtensionOptions } from '../settings/settings';
-import { getTransform, restoreTransform, type Transform } from '../transformUI/viewport';
+import { getTransform, setTransform, type Transform } from '../transformUI/viewport';
 import {
   getViewModel,
-  restoreViewModel,
+  setViewModel,
   type GraphViewModel,
 } from '../viewmodel/viewModel';
 
@@ -28,8 +28,8 @@ export function restoreState(): boolean {
   if (!snapshot || !snapshot.viewModel) {
     return false;
   }
-  restoreViewModel(snapshot.viewModel);
-  restoreTransform(snapshot.transform);
+  setViewModel(snapshot.viewModel);
+  setTransform(snapshot.transform);
   updateExtensionOptions(snapshot.options);
   return true;
 }

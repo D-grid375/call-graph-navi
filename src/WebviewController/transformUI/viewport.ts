@@ -19,12 +19,15 @@ export function getTransform(): Transform {
 }
 
 export function setTransform(t: Transform): void {
+  // Transform値を更新
   currentTransform = t;
   persistStateCallback?.();
-}
 
-export function restoreTransform(t: Transform): void {
-  currentTransform = t;
+  // DOMにTransform値を反映
+  viewport.setAttribute(
+    'transform',
+    `translate(${currentTransform.x},${currentTransform.y}) scale(${currentTransform.scale})`
+  );
 }
 
 export function getLayoutPosition(nodeId: string): { x: number; y: number } | undefined {
@@ -36,25 +39,11 @@ export function setLayoutPositions(positions: Map<string, { x: number; y: number
 }
 
 /**
- * `state.ts` が保持する現在の `Transform` を SVG `viewport` 要素の
- * `transform="translate(x,y) scale(s)"` 属性として反映する。
- * パン・ズーム操作やリセット後に呼び出される。
- */
-export function applyTransform(): void {
-  const t = getTransform();
-  viewport.setAttribute(
-    'transform',
-    `translate(${t.x},${t.y}) scale(${t.scale})`
-  );
-}
-
-/**
  * ビューポート変換を初期状態（原点・等倍）に戻して SVG に反映する。
  * 再描画完了直後や Reset ボタン押下時に呼ばれる。
  */
 export function resetView(): void {
   setTransform({ x: 0, y: 0, scale: 1 });
-  applyTransform();
 }
 
 /**
@@ -75,5 +64,4 @@ export function centerOnNode(nodeId: string): void {
     y: rect.height / 2 - pos.y * scale,
     scale,
   });
-  applyTransform();
 }

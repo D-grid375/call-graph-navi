@@ -1,6 +1,5 @@
 import { svg, viewport } from '../dom/dom';
 import {
-  applyTransform,
   getTransform,
   setTransform,
 } from '../transformUI/viewport';
@@ -53,7 +52,6 @@ export function handleWindowMouseMove(event: MouseEvent): void {
     y: panOriginal.y + (event.clientY - panStart.y),
     scale: t.scale,
   });
-  applyTransform();
 }
 
 /**
@@ -87,5 +85,4 @@ export function handleSvgWheel(event: WheelEvent): void {
     y: my - (my - t.y) * factor,
     scale: newScale,
   });
-  applyTransform();
 }

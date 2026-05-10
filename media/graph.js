@@ -69,9 +69,10 @@
   function setTransform(t) {
     currentTransform = t;
     persistStateCallback?.();
-  }
-  function restoreTransform(t) {
-    currentTransform = t;
+    viewport.setAttribute(
+      "transform",
+      `translate(${currentTransform.x},${currentTransform.y}) scale(${currentTransform.scale})`
+    );
   }
   function getLayoutPosition(nodeId) {
     return layoutPositions.get(nodeId);
@@ -79,16 +80,8 @@
   function setLayoutPositions(positions) {
     layoutPositions = positions;
   }
-  function applyTransform() {
-    const t = getTransform();
-    viewport.setAttribute(
-      "transform",
-      `translate(${t.x},${t.y}) scale(${t.scale})`
-    );
-  }
   function resetView() {
     setTransform({ x: 0, y: 0, scale: 1 });
-    applyTransform();
   }
   function centerOnNode(nodeId) {
     const pos = getLayoutPosition(nodeId);
@@ -102,7 +95,6 @@
       y: rect.height / 2 - pos.y * scale,
       scale
     });
-    applyTransform();
   }
 
   // src/WebviewController/common/util.ts
@@ -122,9 +114,6 @@
   function setViewModel(vm) {
     currentGraphViewModel = vm;
     persistStateCallback2?.();
-  }
-  function restoreViewModel(vm) {
-    currentGraphViewModel = vm;
   }
   function createGraphViewModel(data) {
     return {
@@ -164,8 +153,8 @@
     if (!snapshot || !snapshot.viewModel) {
       return false;
     }
-    restoreViewModel(snapshot.viewModel);
-    restoreTransform(snapshot.transform);
+    setViewModel(snapshot.viewModel);
+    setTransform(snapshot.transform);
     updateExtensionOptions(snapshot.options);
     return true;
   }
@@ -768,8 +757,6 @@
       setLayoutPositions(/* @__PURE__ */ new Map());
       if (resetViewport) {
         resetView();
-      } else {
-        applyTransform();
       }
       return;
     }
@@ -979,7 +966,6 @@ Click: open source`;
     });
     if (resetViewport) {
       resetView();
-    } else {
     }
   }
 
@@ -1482,7 +1468,6 @@ Click: open source`;
       y: panOriginal.y + (event.clientY - panStart.y),
       scale: t.scale
     });
-    applyTransform();
   }
   function handleWindowMouseUp() {
     isPanning = false;
@@ -1501,7 +1486,6 @@ Click: open source`;
       y: my - (my - t.y) * factor,
       scale: newScale
     });
-    applyTransform();
   }
 
   // src/WebviewController/startup/WebviewController.ts
@@ -1511,7 +1495,6 @@ Click: open source`;
   setupInfoTreeToggle();
   if (restoreState()) {
     renderGraph(false);
-    applyTransform();
   }
   window.addEventListener("message", (event) => {
     if (event.data && event.data.type === "updateGraph") {

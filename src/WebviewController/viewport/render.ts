@@ -8,7 +8,6 @@ import {
 } from '../viewmodel/viewModel';
 import { makeEdgeId } from '../common/util';
 import {
-  applyTransform,
   resetView,
   setLayoutPositions,
 } from '../transformUI/viewport';
@@ -190,8 +189,6 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
     setLayoutPositions(new Map());
     if (resetViewport) {
       resetView();
-    } else {
-      applyTransform();
     }
     return;
   }
@@ -313,9 +310,9 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
       'x',
       String(
         x +
-          (hasRemoveButton
-            ? FILE_REMOVE_BUTTON_MARGIN * 2 + FILE_REMOVE_BUTTON_SIZE
-            : 10)
+        (hasRemoveButton
+          ? FILE_REMOVE_BUTTON_MARGIN * 2 + FILE_REMOVE_BUTTON_SIZE
+          : 10)
       )
     );
     text.setAttribute('y', String(headerCenterY));
@@ -448,7 +445,5 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
 
   if (resetViewport) {
     resetView();
-  } else {
-    applyTransform();
   }
 }

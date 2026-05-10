@@ -70,7 +70,6 @@ import {
 } from '../interaction/panZoom';
 import { renderGraph, setRenderPersistStateCallback } from '../viewport/render';
 import {
-  applyTransform,
   resetView,
   setTransformPersistStateCallback,
 } from '../transformUI/viewport';
@@ -91,7 +90,6 @@ setupInfoTreeToggle();
 // ウィンドウ切り出し等で Webview が再生成された場合、前回の状態を復元する
 if (restoreState()) {
   renderGraph(false);
-  applyTransform();
 }
 
 // WebviewManagerからのイベント受信

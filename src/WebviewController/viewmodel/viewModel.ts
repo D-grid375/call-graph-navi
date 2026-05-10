@@ -48,10 +48,6 @@ export function setViewModel(vm: GraphViewModel | null): void {
   persistStateCallback?.();
 }
 
-export function restoreViewModel(vm: GraphViewModel | null): void {
-  currentGraphViewModel = vm;
-}
-
 /**
  * Extension Host から受け取った `CallGraphData` から、Webview 内部表示用の `GraphViewModel` を生成する。
  *
