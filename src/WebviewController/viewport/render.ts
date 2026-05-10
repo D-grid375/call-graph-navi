@@ -6,7 +6,6 @@ import {
   type GraphViewModel,
   type NodeVM,
 } from '../viewmodel/viewModel';
-import { makeEdgeId } from '../common/util';
 import {
   resetView,
   setLayoutPositions,
@@ -431,7 +430,7 @@ function render(viewModel: GraphViewModel, resetViewport: boolean): void {
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     group.setAttribute('class', 'edge');
     const groupEl = group as unknown as HTMLElement;
-    groupEl.dataset.edgeId = makeEdgeId(edgeRef.v, edgeRef.w);
+    groupEl.dataset.edgeId = `${edgeRef.v}->${edgeRef.w}`;
     groupEl.dataset.from = edgeRef.v;
     groupEl.dataset.to = edgeRef.w;
 

@@ -97,11 +97,6 @@
     });
   }
 
-  // src/WebviewController/common/util.ts
-  function makeEdgeId(from, to) {
-    return `${from}->${to}`;
-  }
-
   // src/WebviewController/viewmodel/viewModel.ts
   var currentGraphViewModel = null;
   var persistStateCallback2;
@@ -129,7 +124,7 @@
         }
       })),
       edges: data.edges.map((edge) => ({
-        id: makeEdgeId(edge.from, edge.to),
+        id: `${edge.from}->${edge.to}`,
         from: edge.from,
         to: edge.to,
         view: {
@@ -955,7 +950,7 @@ Click: open source`;
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
       group.setAttribute("class", "edge");
       const groupEl = group;
-      groupEl.dataset.edgeId = makeEdgeId(edgeRef.v, edgeRef.w);
+      groupEl.dataset.edgeId = `${edgeRef.v}->${edgeRef.w}`;
       groupEl.dataset.from = edgeRef.v;
       groupEl.dataset.to = edgeRef.w;
       const path = document.createElementNS("http://www.w3.org/2000/svg", "path");

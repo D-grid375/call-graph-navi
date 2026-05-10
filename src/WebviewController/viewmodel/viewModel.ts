@@ -1,5 +1,4 @@
 import type { CallGraphData, FileGroup, GraphNode } from '../../shared/types';
-import { makeEdgeId } from '../common/util';
 
 export interface NodeViewState {
   visibility: 'visible' | 'hidden';
@@ -74,7 +73,7 @@ export function createGraphViewModel(data: CallGraphData): GraphViewModel {
       },
     })),
     edges: data.edges.map((edge) => ({
-      id: makeEdgeId(edge.from, edge.to),
+      id: `${edge.from}->${edge.to}`,
       from: edge.from,
       to: edge.to,
       view: {
