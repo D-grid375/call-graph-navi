@@ -1,6 +1,5 @@
-import { getViewModel } from '../../common/state';
-import type { GraphViewModel } from '../../common/types';
 import { renderGraph } from '../../viewport/render';
+import { getViewModel, type GraphViewModel } from '../../viewmodel/viewModel';
 import { hideNodeContextMenu } from './nodeContextMenu';
 import { hideNodes, pruneUnreachableFromRoot } from './visibilityOps';
 

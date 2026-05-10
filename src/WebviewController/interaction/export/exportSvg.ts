@@ -1,4 +1,5 @@
-import { vscode, svg } from '../../dom/dom';
+import { vscode } from '../../common/types';
+import { svg } from '../../dom/dom';
 import { inlineStyles, fitToGraphBounds } from './exportUtil';
 
 /**

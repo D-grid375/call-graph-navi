@@ -2,12 +2,11 @@ import { searchIndicator, searchInput } from '../dom/dom';
 import {
   clearSearchState,
   getSearchState,
-  getViewModel,
   setSearchState,
-} from '../common/state';
-import type { GraphViewModel } from '../common/types';
+} from '../serach/search';
 import { centerOnNode } from '../transformUI/viewport';
 import { renderGraph } from '../viewport/render';
+import { getViewModel, type GraphViewModel } from '../viewmodel/viewModel';
 
 type SearchDirection = 1 | -1;
 

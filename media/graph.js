@@ -1,7 +1,6 @@
 "use strict";
 (() => {
   // src/WebviewController/dom/dom.ts
-  var vscode = acquireVsCodeApi();
   var svg = document.getElementById("graph");
   var viewport = document.getElementById("viewport");
   var tooltip = document.getElementById("tooltip");
@@ -26,59 +25,11 @@
   var btnSearchNext = document.getElementById("btn-search-next");
   var searchIndicator = document.getElementById("search-indicator");
 
-  // src/WebviewController/common/state.ts
-  var currentGraphViewModel = null;
-  var currentTransform = { x: 0, y: 0, scale: 1 };
-  var layoutPositions = /* @__PURE__ */ new Map();
-  var searchState = { query: "", hitIds: [], currentIndex: -1 };
+  // src/WebviewController/common/types.ts
+  var vscode = acquireVsCodeApi();
+
+  // src/WebviewController/settings/settings.ts
   var currentOptions;
-  function persistState() {
-    const snapshot = {
-      viewModel: currentGraphViewModel,
-      transform: currentTransform,
-      options: currentOptions
-    };
-    vscode.setState(snapshot);
-  }
-  function restoreState() {
-    const snapshot = vscode.getState();
-    if (!snapshot || !snapshot.viewModel) {
-      return false;
-    }
-    currentGraphViewModel = snapshot.viewModel;
-    currentTransform = snapshot.transform;
-    currentOptions = snapshot.options;
-    return true;
-  }
-  function getViewModel() {
-    return currentGraphViewModel;
-  }
-  function setViewModel(vm) {
-    currentGraphViewModel = vm;
-    persistState();
-  }
-  function getTransform() {
-    return currentTransform;
-  }
-  function setTransform(t) {
-    currentTransform = t;
-    persistState();
-  }
-  function getLayoutPosition(nodeId) {
-    return layoutPositions.get(nodeId);
-  }
-  function setLayoutPositions(positions) {
-    layoutPositions = positions;
-  }
-  function getSearchState() {
-    return searchState;
-  }
-  function setSearchState(state) {
-    searchState = state;
-  }
-  function clearSearchState() {
-    searchState = { query: "", hitIds: [], currentIndex: -1 };
-  }
   function updateExtensionOptions(options) {
     currentOptions = options;
   }
@@ -103,6 +54,120 @@
     };
     const option = getExtensionOptions().pngExportScale;
     return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
+  }
+
+  // src/WebviewController/transformUI/viewport.ts
+  var currentTransform = { x: 0, y: 0, scale: 1 };
+  var persistStateCallback;
+  var layoutPositions = /* @__PURE__ */ new Map();
+  function setTransformPersistStateCallback(callback) {
+    persistStateCallback = callback;
+  }
+  function getTransform() {
+    return currentTransform;
+  }
+  function setTransform(t) {
+    currentTransform = t;
+    persistStateCallback?.();
+  }
+  function restoreTransform(t) {
+    currentTransform = t;
+  }
+  function getLayoutPosition(nodeId) {
+    return layoutPositions.get(nodeId);
+  }
+  function setLayoutPositions(positions) {
+    layoutPositions = positions;
+  }
+  function applyTransform() {
+    const t = getTransform();
+    viewport.setAttribute(
+      "transform",
+      `translate(${t.x},${t.y}) scale(${t.scale})`
+    );
+  }
+  function resetView() {
+    setTransform({ x: 0, y: 0, scale: 1 });
+    applyTransform();
+  }
+  function centerOnNode(nodeId) {
+    const pos = getLayoutPosition(nodeId);
+    if (!pos) {
+      return;
+    }
+    const rect = svg.getBoundingClientRect();
+    const { scale } = getTransform();
+    setTransform({
+      x: rect.width / 2 - pos.x * scale,
+      y: rect.height / 2 - pos.y * scale,
+      scale
+    });
+    applyTransform();
+  }
+
+  // src/WebviewController/common/util.ts
+  function makeEdgeId(from, to) {
+    return `${from}->${to}`;
+  }
+
+  // src/WebviewController/viewmodel/viewModel.ts
+  var currentGraphViewModel = null;
+  var persistStateCallback2;
+  function setViewModelPersistStateCallback(callback) {
+    persistStateCallback2 = callback;
+  }
+  function getViewModel() {
+    return currentGraphViewModel;
+  }
+  function setViewModel(vm) {
+    currentGraphViewModel = vm;
+    persistStateCallback2?.();
+  }
+  function restoreViewModel(vm) {
+    currentGraphViewModel = vm;
+  }
+  function createGraphViewModel(data) {
+    return {
+      rootNodeId: data.rootNodeId,
+      direction: data.direction,
+      files: data.files.map((file) => ({ ...file })),
+      nodes: data.nodes.map((node) => ({
+        ...node,
+        view: {
+          visibility: "visible",
+          selected: false,
+          highlighted: false
+        }
+      })),
+      edges: data.edges.map((edge) => ({
+        id: makeEdgeId(edge.from, edge.to),
+        from: edge.from,
+        to: edge.to,
+        view: {
+          visibility: "visible"
+        }
+      }))
+    };
+  }
+
+  // src/WebviewController/snapshot/snapshot.ts
+  function persistState() {
+    const snapshot = {
+      viewModel: getViewModel(),
+      transform: getTransform(),
+      options: getExtensionOptions()
+    };
+    vscode.setState(snapshot);
+  }
+  function restoreState() {
+    const snapshot = vscode.getState();
+    if (!snapshot || !snapshot.viewModel) {
+      return false;
+    }
+    restoreViewModel(snapshot.viewModel);
+    restoreTransform(snapshot.transform);
+    updateExtensionOptions(snapshot.options);
+    return true;
   }
 
   // src/WebviewController/interaction/nodeInteraction/visibilityOps.ts
@@ -597,14 +662,28 @@
     return result;
   }
 
-  // src/WebviewController/common/util.ts
+  // src/WebviewController/viewport/render.ts
+  var PADDING = 20;
+  var NODE_HEIGHT = 28;
+  var FILE_REMOVE_BUTTON_SIZE = 16;
+  var FILE_REMOVE_BUTTON_MARGIN = 8;
+  var FILE_HEADER_EXTRA_GAP = 4;
+  var NODE_REMOVE_BUTTON_SIZE = 12;
+  var NODE_REMOVE_BUTTON_MARGIN_VERTICAL = (NODE_HEIGHT - NODE_REMOVE_BUTTON_SIZE) / 2;
+  var NODE_REMOVE_BUTTON_MARGIN_LEFT = 8;
+  var NODE_REMOVE_BUTTON_MARGIN_RIGHT = 0;
+  var NODE_REMOVE_BUTTON_AREA = NODE_REMOVE_BUTTON_MARGIN_LEFT + NODE_REMOVE_BUTTON_SIZE + NODE_REMOVE_BUTTON_MARGIN_RIGHT;
   var NODE_LABEL_MARGIN_LEFT = 12;
   var NODE_LABEL_MARGIN_RIGHT = 12;
-  function makeEdgeId(from, to) {
-    return `${from}->${to}`;
+  var persistStateCallback3;
+  function setRenderPersistStateCallback(callback) {
+    persistStateCallback3 = callback;
   }
   function estimateWidth(text) {
-    return Math.max(80, text.length * 7 + NODE_LABEL_MARGIN_LEFT + NODE_LABEL_MARGIN_RIGHT);
+    return Math.max(
+      80,
+      text.length * 7 + NODE_LABEL_MARGIN_LEFT + NODE_LABEL_MARGIN_RIGHT
+    );
   }
   function buildNodeClassName(node) {
     const classNames = ["func-node"];
@@ -659,45 +738,6 @@
     d += ` L${last.x},${last.y}`;
     return d;
   }
-
-  // src/WebviewController/transformUI/viewport.ts
-  function applyTransform() {
-    const t = getTransform();
-    viewport.setAttribute(
-      "transform",
-      `translate(${t.x},${t.y}) scale(${t.scale})`
-    );
-  }
-  function resetView() {
-    setTransform({ x: 0, y: 0, scale: 1 });
-    applyTransform();
-  }
-  function centerOnNode(nodeId) {
-    const pos = getLayoutPosition(nodeId);
-    if (!pos) {
-      return;
-    }
-    const rect = svg.getBoundingClientRect();
-    const { scale } = getTransform();
-    setTransform({
-      x: rect.width / 2 - pos.x * scale,
-      y: rect.height / 2 - pos.y * scale,
-      scale
-    });
-    applyTransform();
-  }
-
-  // src/WebviewController/viewport/render.ts
-  var PADDING = 20;
-  var NODE_HEIGHT = 28;
-  var FILE_REMOVE_BUTTON_SIZE = 16;
-  var FILE_REMOVE_BUTTON_MARGIN = 8;
-  var FILE_HEADER_EXTRA_GAP = 4;
-  var NODE_REMOVE_BUTTON_SIZE = 12;
-  var NODE_REMOVE_BUTTON_MARGIN_VERTICAL = (NODE_HEIGHT - NODE_REMOVE_BUTTON_SIZE) / 2;
-  var NODE_REMOVE_BUTTON_MARGIN_LEFT = 8;
-  var NODE_REMOVE_BUTTON_MARGIN_RIGHT = 0;
-  var NODE_REMOVE_BUTTON_AREA = NODE_REMOVE_BUTTON_MARGIN_LEFT + NODE_REMOVE_BUTTON_SIZE + NODE_REMOVE_BUTTON_MARGIN_RIGHT;
   function renderGraph(resetViewport) {
     const vm = getViewModel();
     if (!vm) {
@@ -708,7 +748,7 @@
       return;
     }
     render(vm, resetViewport);
-    persistState();
+    persistStateCallback3?.();
   }
   function render(viewModel, resetViewport) {
     const visibleNodes = viewModel.nodes.filter(
@@ -940,7 +980,6 @@ Click: open source`;
     if (resetViewport) {
       resetView();
     } else {
-      applyTransform();
     }
   }
 
@@ -1231,6 +1270,18 @@ Click: open source`;
     return { vm, node };
   }
 
+  // src/WebviewController/serach/search.ts
+  var searchState = { query: "", hitIds: [], currentIndex: -1 };
+  function getSearchState() {
+    return searchState;
+  }
+  function setSearchState(state) {
+    searchState = state;
+  }
+  function clearSearchState() {
+    searchState = { query: "", hitIds: [], currentIndex: -1 };
+  }
+
   // src/WebviewController/interaction/nodeSearchInteraction.ts
   function handleSearchInputKeyDown(event) {
     if (event.key !== "Enter") {
@@ -1453,32 +1504,10 @@ Click: open source`;
     applyTransform();
   }
 
-  // src/WebviewController/viewmodel/viewModel.ts
-  function createGraphViewModel(data) {
-    return {
-      rootNodeId: data.rootNodeId,
-      direction: data.direction,
-      files: data.files.map((file) => ({ ...file })),
-      nodes: data.nodes.map((node) => ({
-        ...node,
-        view: {
-          visibility: "visible",
-          selected: false,
-          highlighted: false
-        }
-      })),
-      edges: data.edges.map((edge) => ({
-        id: makeEdgeId(edge.from, edge.to),
-        from: edge.from,
-        to: edge.to,
-        view: {
-          visibility: "visible"
-        }
-      }))
-    };
-  }
-
   // src/WebviewController/startup/WebviewController.ts
+  setViewModelPersistStateCallback(persistState);
+  setTransformPersistStateCallback(persistState);
+  setRenderPersistStateCallback(persistState);
   setupInfoTreeToggle();
   if (restoreState()) {
     renderGraph(false);

@@ -21,11 +21,8 @@ import {
   svg,
   viewport,
 } from '../dom/dom';
-import {
-  restoreState,
-  setViewModel,
-  updateExtensionOptions,
-} from '../common/state';
+import { persistState, restoreState } from '../snapshot/snapshot';
+import { updateExtensionOptions } from '../settings/settings';
 import {
   exportPlantUml,
   hideAllNodes,
@@ -71,9 +68,22 @@ import {
   handleWindowMouseMove,
   handleWindowMouseUp,
 } from '../interaction/panZoom';
-import { renderGraph } from '../viewport/render';
-import { applyTransform, resetView } from '../transformUI/viewport';
-import { createGraphViewModel } from '../viewmodel/viewModel';
+import { renderGraph, setRenderPersistStateCallback } from '../viewport/render';
+import {
+  applyTransform,
+  resetView,
+  setTransformPersistStateCallback,
+} from '../transformUI/viewport';
+import {
+  createGraphViewModel,
+  setViewModel,
+  setViewModelPersistStateCallback,
+} from '../viewmodel/viewModel';
+
+
+setViewModelPersistStateCallback(persistState);
+setTransformPersistStateCallback(persistState);
+setRenderPersistStateCallback(persistState);
 
 // info パネルのアコーディオントグル初期化
 setupInfoTreeToggle();

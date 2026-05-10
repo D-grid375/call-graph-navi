@@ -1,5 +1,39 @@
 import { svg, viewport } from '../dom/dom';
-import { getLayoutPosition, getTransform, setTransform } from '../common/state';
+
+export interface Transform {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+let currentTransform: Transform = { x: 0, y: 0, scale: 1 };
+let persistStateCallback: (() => void) | undefined;
+let layoutPositions: Map<string, { x: number; y: number }> = new Map(); // ノードIDから、そのノードの描画位置を引くためのMap
+
+export function setTransformPersistStateCallback(callback: () => void): void {
+  persistStateCallback = callback;
+}
+
+export function getTransform(): Transform {
+  return currentTransform;
+}
+
+export function setTransform(t: Transform): void {
+  currentTransform = t;
+  persistStateCallback?.();
+}
+
+export function restoreTransform(t: Transform): void {
+  currentTransform = t;
+}
+
+export function getLayoutPosition(nodeId: string): { x: number; y: number } | undefined {
+  return layoutPositions.get(nodeId);
+}
+
+export function setLayoutPositions(positions: Map<string, { x: number; y: number }>): void {
+  layoutPositions = positions;
+}
 
 /**
  * `state.ts` が保持する現在の `Transform` を SVG `viewport` 要素の

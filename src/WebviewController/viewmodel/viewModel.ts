@@ -1,6 +1,56 @@
-import type { CallGraphData } from '../../shared/types';
-import type { GraphViewModel } from '../common/types';
+import type { CallGraphData, FileGroup, GraphNode } from '../../shared/types';
 import { makeEdgeId } from '../common/util';
+
+export interface NodeViewState {
+  visibility: 'visible' | 'hidden';
+  selected: boolean;
+  highlighted: boolean;
+}
+
+export interface EdgeViewState {
+  visibility: 'visible' | 'hidden';
+}
+
+export interface NodeVM extends GraphNode {
+  view: NodeViewState;
+}
+
+export interface EdgeVM {
+  id: string;
+  from: string;
+  to: string;
+  view: EdgeViewState;
+}
+
+export type FileVM = FileGroup;
+
+export interface GraphViewModel {
+  rootNodeId: string;
+  direction: CallGraphData['direction'];
+  files: FileVM[];
+  nodes: NodeVM[];
+  edges: EdgeVM[];
+}
+
+let currentGraphViewModel: GraphViewModel | null = null;
+let persistStateCallback: (() => void) | undefined;
+
+export function setViewModelPersistStateCallback(callback: () => void): void {
+  persistStateCallback = callback;
+}
+
+export function getViewModel(): GraphViewModel | null {
+  return currentGraphViewModel;
+}
+
+export function setViewModel(vm: GraphViewModel | null): void {
+  currentGraphViewModel = vm;
+  persistStateCallback?.();
+}
+
+export function restoreViewModel(vm: GraphViewModel | null): void {
+  currentGraphViewModel = vm;
+}
 
 /**
  * Extension Host から受け取った `CallGraphData` から、Webview 内部表示用の `GraphViewModel` を生成する。

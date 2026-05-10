@@ -1,5 +1,7 @@
-import { getViewModel } from '../../common/state';
-import type { GraphViewModel } from '../../common/types';
+import {
+  getViewModel,
+  type GraphViewModel,
+} from '../../viewmodel/viewModel';
 import { buildAdjacencyMaps, collectReachable } from './visibilityOps';
 
 /**

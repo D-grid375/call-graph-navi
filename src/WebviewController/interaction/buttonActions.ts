@@ -1,5 +1,5 @@
 import { renderGraph } from '../viewport/render';
-import { getViewModel } from '../common/state';
+import { getViewModel } from '../viewmodel/viewModel';
 import { exportPlantUmlToClipboard } from './export/exportPlantUml';
 
 /**

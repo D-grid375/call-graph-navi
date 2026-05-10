@@ -1,6 +1,9 @@
 import { infoToggle, infoTree } from '../dom/dom';
-import { getViewModel } from '../common/state';
-import type { GraphViewModel, NodeVM } from '../common/types';
+import {
+  getViewModel,
+  type GraphViewModel,
+  type NodeVM,
+} from '../viewmodel/viewModel';
 import type { FileGroup } from '../../shared/types';
 import { fileRemoveFromVM } from './nodeInteraction/folderInteraction';
 import { nodeRemoveFromVM } from './nodeInteraction/nodeRemove';

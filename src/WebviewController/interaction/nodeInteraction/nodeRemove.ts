@@ -1,7 +1,7 @@
-import { getViewModel } from '../../common/state';
 import { renderGraph } from '../../viewport/render';
 import { hideNodeContextMenu } from './nodeContextMenu';
 import { hideNodes, pruneUnreachableFromRoot } from './visibilityOps';
+import { getViewModel } from '../../viewmodel/viewModel';
 
 /**
  * ノード矩形の × ボタン押下（ノード単体閉じ）時のハンドラ。

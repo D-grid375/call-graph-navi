@@ -1,11 +1,11 @@
+import { vscode } from '../../common/types';
 import {
   contextMenu,
   tooltip,
-  vscode,
 } from '../../dom/dom';
-import type { NodeVM } from '../../common/types';
 import type { GraphDirection } from '../../../shared/webviewMessages';
 import { renderGraph } from '../../viewport/render';
+import type { NodeVM } from '../../viewmodel/viewModel';
 import { applyPathVisualization } from './pathVisualization';
 
 let contextMenuNode: NodeVM | null = null;

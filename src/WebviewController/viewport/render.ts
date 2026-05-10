@@ -1,22 +1,39 @@
 import { infoSummaryText, tooltip, viewport } from '../dom/dom';
 import { clearInfoTree, renderInfoTree } from '../interaction/infoTree';
+import { getGraphOrientation } from '../settings/settings';
 import {
   getViewModel,
-  persistState,
-  setLayoutPositions,
-  getGraphOrientation,
-} from '../common/state';
-import type { GraphViewModel } from '../common/types';
+  type GraphViewModel,
+  type NodeVM,
+} from '../viewmodel/viewModel';
+import { makeEdgeId } from '../common/util';
 import {
-  buildNodeClassName,
-  clearViewport,
-  estimateWidth,
-  makeEdgeId,
-  NODE_LABEL_MARGIN_LEFT,
-  NODE_LABEL_MARGIN_RIGHT,
-  pointsToPath,
-} from '../common/util';
-import { applyTransform, resetView } from '../transformUI/viewport';
+  applyTransform,
+  resetView,
+  setLayoutPositions,
+} from '../transformUI/viewport';
+
+interface DagreGraph {
+  setGraph(opts: Record<string, unknown>): void;
+  setDefaultEdgeLabel(fn: () => Record<string, unknown>): void;
+  setNode(id: string, opts: Record<string, unknown>): void;
+  setEdge(from: string, to: string): void;
+  setParent(child: string, parent: string): void;
+  node(id: string): { x: number; y: number; width: number; height: number } | undefined;
+  edge(ref: { v: string; w: string }): { points: Array<{ x: number; y: number }> } | undefined;
+  edges(): Array<{ v: string; w: string }>;
+}
+
+// dagre.min.js は graph.html でこのバンドルより先に読み込まれるため、
+// import ではなく実行時のグローバル変数として存在する。
+declare global {
+  const dagre: {
+    graphlib: {
+      Graph: new (opts?: { compound?: boolean }) => DagreGraph;
+    };
+    layout(graph: DagreGraph): void;
+  };
+}
 
 const PADDING = 20;
 const NODE_HEIGHT = 28;
@@ -32,6 +49,81 @@ const NODE_REMOVE_BUTTON_AREA =
   NODE_REMOVE_BUTTON_MARGIN_LEFT +
   NODE_REMOVE_BUTTON_SIZE +
   NODE_REMOVE_BUTTON_MARGIN_RIGHT;
+const NODE_LABEL_MARGIN_LEFT = 12;
+const NODE_LABEL_MARGIN_RIGHT = 12;
+let persistStateCallback: (() => void) | undefined;
+
+export function setRenderPersistStateCallback(callback: () => void): void {
+  persistStateCallback = callback;
+}
+
+function estimateWidth(text: string): number {
+  return Math.max(
+    80,
+    text.length * 7 + NODE_LABEL_MARGIN_LEFT + NODE_LABEL_MARGIN_RIGHT
+  );
+}
+
+function buildNodeClassName(node: NodeVM): string {
+  const classNames = ['func-node'];
+  if (node.isRoot) {
+    classNames.push('root');
+  }
+  if (node.view.selected) {
+    classNames.push('selected');
+  }
+  if (node.view.highlighted) {
+    classNames.push('matched');
+  }
+  return classNames.join(' ');
+}
+
+function clearViewport(): void {
+  while (viewport.firstChild) {
+    viewport.removeChild(viewport.firstChild);
+  }
+  tooltip.classList.add('hidden');
+}
+
+function pointsToPath(points: Array<{ x: number; y: number }>): string {
+  if (!points || points.length === 0) {
+    return '';
+  }
+
+  if (points.length < 3) {
+    let d = `M${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      d += ` L${points[i].x},${points[i].y}`;
+    }
+    return d;
+  }
+
+  const R = 5;
+  let d = `M${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const next = points[i + 1];
+
+    const dx1 = curr.x - prev.x;
+    const dy1 = curr.y - prev.y;
+    const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+    const dx2 = next.x - curr.x;
+    const dy2 = next.y - curr.y;
+    const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+    const r = Math.min(R, len1 / 2, len2 / 2);
+    const bx = curr.x - (dx1 / len1) * r;
+    const by = curr.y - (dy1 / len1) * r;
+    const ax = curr.x + (dx2 / len2) * r;
+    const ay = curr.y + (dy2 / len2) * r;
+
+    d += ` L${bx},${by} Q${curr.x},${curr.y} ${ax},${ay}`;
+  }
+  const last = points[points.length - 1];
+  d += ` L${last.x},${last.y}`;
+  return d;
+}
 
 /**
  * グラフ描画のメイン関数。グラフの新規描画・更新の際はこれをコールする。
@@ -51,7 +143,7 @@ export function renderGraph(resetViewport: boolean): void {
     return;
   }
   render(vm, resetViewport);
-  persistState();
+  persistStateCallback?.();
 }
 
 /**

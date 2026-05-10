@@ -1,7 +1,3 @@
-import type { VsCodeApi } from '../common/types';
-
-export const vscode: VsCodeApi = acquireVsCodeApi();
-
 export const svg = document.getElementById('graph') as unknown as SVGSVGElement;
 export const viewport = document.getElementById('viewport') as unknown as SVGGElement;
 export const tooltip = document.getElementById('tooltip') as HTMLElement;
