@@ -1,12 +1,12 @@
-import { infoSummaryText, tooltip, viewport } from '../core/dom';
-import { clearInfoTree, renderInfoTree } from './infoTree';
+import { infoSummaryText, tooltip, viewport } from '../dom/dom';
+import { clearInfoTree, renderInfoTree } from '../interaction/infoTree';
 import {
   getViewModel,
   persistState,
   setLayoutPositions,
   getGraphOrientation,
-} from '../core/state';
-import type { GraphViewModel } from '../core/types';
+} from '../common/state';
+import type { GraphViewModel } from '../common/types';
 import {
   buildNodeClassName,
   clearViewport,
@@ -15,8 +15,8 @@ import {
   NODE_LABEL_MARGIN_LEFT,
   NODE_LABEL_MARGIN_RIGHT,
   pointsToPath,
-} from '../core/util';
-import { applyTransform, resetView } from '../core/viewport';
+} from '../common/util';
+import { applyTransform, resetView } from '../transformUI/viewport';
 
 const PADDING = 20;
 const NODE_HEIGHT = 28;

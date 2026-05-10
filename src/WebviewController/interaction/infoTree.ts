@@ -1,11 +1,11 @@
-import { infoToggle, infoTree } from '../core/dom';
-import { getViewModel } from '../core/state';
-import type { GraphViewModel, NodeVM } from '../core/types';
+import { infoToggle, infoTree } from '../dom/dom';
+import { getViewModel } from '../common/state';
+import type { GraphViewModel, NodeVM } from '../common/types';
 import type { FileGroup } from '../../shared/types';
 import { fileRemoveFromVM } from './nodeInteraction/folderInteraction';
 import { nodeRemoveFromVM } from './nodeInteraction/nodeRemove';
 import { unhideNode, unhideFile, pruneUnreachableFromRoot } from './nodeInteraction/visibilityOps';
-import { renderGraph } from './render';
+import { renderGraph } from '../viewport/render';
 
 let expanded = false;
 

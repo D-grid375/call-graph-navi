@@ -1,13 +1,13 @@
-import { searchIndicator, searchInput } from '../core/dom';
+import { searchIndicator, searchInput } from '../dom/dom';
 import {
   clearSearchState,
   getSearchState,
   getViewModel,
   setSearchState,
-} from '../core/state';
-import type { GraphViewModel } from '../core/types';
-import { centerOnNode } from '../core/viewport';
-import { renderGraph } from './render';
+} from '../common/state';
+import type { GraphViewModel } from '../common/types';
+import { centerOnNode } from '../transformUI/viewport';
+import { renderGraph } from '../viewport/render';
 
 type SearchDirection = 1 | -1;
 

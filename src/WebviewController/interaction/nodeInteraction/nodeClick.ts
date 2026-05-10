@@ -1,5 +1,5 @@
-import { vscode } from '../../core/dom';
-import type { GraphViewModel, NodeVM } from '../../core/types';
+import { vscode } from '../../dom/dom';
+import type { GraphViewModel, NodeVM } from '../../common/types';
 
 /**
  * ノードクリック時の挙動ディスパッチ。
@@ -29,4 +29,3 @@ export function handleNodeClick(
     });
   }
 }
-

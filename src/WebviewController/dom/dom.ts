@@ -1,4 +1,4 @@
-import type { VsCodeApi } from './types';
+import type { VsCodeApi } from '../common/types';
 
 export const vscode: VsCodeApi = acquireVsCodeApi();
 

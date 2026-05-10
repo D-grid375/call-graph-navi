@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // src/WebviewController/core/dom.ts
+  // src/WebviewController/dom/dom.ts
   var vscode = acquireVsCodeApi();
   var svg = document.getElementById("graph");
   var viewport = document.getElementById("viewport");
@@ -26,7 +26,7 @@
   var btnSearchNext = document.getElementById("btn-search-next");
   var searchIndicator = document.getElementById("search-indicator");
 
-  // src/WebviewController/core/state.ts
+  // src/WebviewController/common/state.ts
   var currentGraphViewModel = null;
   var currentTransform = { x: 0, y: 0, scale: 1 };
   var layoutPositions = /* @__PURE__ */ new Map();
@@ -105,7 +105,7 @@
     return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
   }
 
-  // src/WebviewController/feature/nodeInteraction/visibilityOps.ts
+  // src/WebviewController/interaction/nodeInteraction/visibilityOps.ts
   function unhideFile(vm, filePath) {
     const unhideNodeIds = collectRemovedNodeIds(vm, filePath);
     if (unhideNodeIds.size === 0) {
@@ -221,7 +221,7 @@
     return visited;
   }
 
-  // src/WebviewController/feature/nodeInteraction/pathVisualization.ts
+  // src/WebviewController/interaction/nodeInteraction/pathVisualization.ts
   function applyPathVisualization(clickedNodeId) {
     const vm = getViewModel();
     if (!vm) {
@@ -270,7 +270,7 @@
     return { sourceId: vm.rootNodeId, targetId: clickedNodeId };
   }
 
-  // src/WebviewController/feature/nodeInteraction/nodeContextMenu.ts
+  // src/WebviewController/interaction/nodeInteraction/nodeContextMenu.ts
   var contextMenuNode = null;
   function showNodeContextMenu(node, event) {
     event.preventDefault();
@@ -339,7 +339,7 @@
     hideNodeContextMenu();
   }
 
-  // src/WebviewController/feature/nodeInteraction/folderInteraction.ts
+  // src/WebviewController/interaction/nodeInteraction/folderInteraction.ts
   function handleFolderClick(event) {
     const target = event.target;
     const button = target?.closest(".file-remove-button");
@@ -377,7 +377,7 @@
     );
   }
 
-  // src/WebviewController/feature/nodeInteraction/nodeRemove.ts
+  // src/WebviewController/interaction/nodeInteraction/nodeRemove.ts
   function handleNodeRemoveClick(event) {
     const target = event.target;
     const button = target?.closest(".node-remove-button");
@@ -405,7 +405,7 @@
     renderGraph(false);
   }
 
-  // src/WebviewController/feature/infoTree.ts
+  // src/WebviewController/interaction/infoTree.ts
   var expanded = false;
   function setupInfoTreeToggle() {
     applyExpandedState();
@@ -597,7 +597,7 @@
     return result;
   }
 
-  // src/WebviewController/core/util.ts
+  // src/WebviewController/common/util.ts
   var NODE_LABEL_MARGIN_LEFT = 12;
   var NODE_LABEL_MARGIN_RIGHT = 12;
   function makeEdgeId(from, to) {
@@ -660,7 +660,7 @@
     return d;
   }
 
-  // src/WebviewController/core/viewport.ts
+  // src/WebviewController/transformUI/viewport.ts
   function applyTransform() {
     const t = getTransform();
     viewport.setAttribute(
@@ -687,7 +687,7 @@
     applyTransform();
   }
 
-  // src/WebviewController/feature/render.ts
+  // src/WebviewController/viewport/render.ts
   var PADDING = 20;
   var NODE_HEIGHT = 28;
   var FILE_REMOVE_BUTTON_SIZE = 16;
@@ -944,7 +944,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/export/exportPlantUml.ts
+  // src/WebviewController/interaction/export/exportPlantUml.ts
   function exportPlantUmlToClipboard() {
     const vm = getViewModel();
     if (!vm) {
@@ -1017,7 +1017,7 @@ Click: open source`;
     return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
-  // src/WebviewController/feature/buttonActions.ts
+  // src/WebviewController/interaction/buttonActions.ts
   function showAllNodes() {
     const vm = getViewModel();
     if (!vm) {
@@ -1066,7 +1066,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/export/exportUtil.ts
+  // src/WebviewController/interaction/export/exportUtil.ts
   var EXPORT_PADDING = 20;
   function fitToGraphBounds(cloned) {
     const bbox = viewport.getBBox();
@@ -1121,7 +1121,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/export/exportSvg.ts
+  // src/WebviewController/interaction/export/exportSvg.ts
   function exportSvgToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
@@ -1131,7 +1131,7 @@ Click: open source`;
     vscode.postMessage({ type: "exportSvg", svgText });
   }
 
-  // src/WebviewController/feature/export/exportPng.ts
+  // src/WebviewController/interaction/export/exportPng.ts
   function exportPngToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
@@ -1157,7 +1157,7 @@ Click: open source`;
     img.src = svgDataUrl;
   }
 
-  // src/WebviewController/feature/export/exportMenu.ts
+  // src/WebviewController/interaction/export/exportMenu.ts
   function toggleExportMenu(event) {
     event.stopPropagation();
     exportMenu.classList.toggle("hidden");
@@ -1178,7 +1178,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/nodeInteraction/nodeClick.ts
+  // src/WebviewController/interaction/nodeInteraction/nodeClick.ts
   function handleNodeClick(vm, node, event) {
     event.stopPropagation();
     if (event.shiftKey) {
@@ -1192,7 +1192,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/feature/nodeInteraction/nodeInteraction.ts
+  // src/WebviewController/interaction/nodeInteraction/nodeInteraction.ts
   function handleViewportClick(event) {
     const resolved = resolveNodeFromEventTarget(event.target);
     if (!resolved) {
@@ -1231,7 +1231,7 @@ Click: open source`;
     return { vm, node };
   }
 
-  // src/WebviewController/feature/nodeSearchInteraction.ts
+  // src/WebviewController/interaction/nodeSearchInteraction.ts
   function handleSearchInputKeyDown(event) {
     if (event.key !== "Enter") {
       return;
@@ -1405,7 +1405,7 @@ Click: open source`;
     return (index % length + length) % length;
   }
 
-  // src/WebviewController/feature/panZoom.ts
+  // src/WebviewController/interaction/panZoom.ts
   var isPanning = false;
   var panStart = { x: 0, y: 0 };
   var panOriginal = { x: 0, y: 0 };
@@ -1453,7 +1453,7 @@ Click: open source`;
     applyTransform();
   }
 
-  // src/WebviewController/feature/viewModel.ts
+  // src/WebviewController/viewmodel/viewModel.ts
   function createGraphViewModel(data) {
     return {
       rootNodeId: data.rootNodeId,
@@ -1478,7 +1478,7 @@ Click: open source`;
     };
   }
 
-  // src/WebviewController/WebviewController.ts
+  // src/WebviewController/startup/WebviewController.ts
   setupInfoTreeToggle();
   if (restoreState()) {
     renderGraph(false);

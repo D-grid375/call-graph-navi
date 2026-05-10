@@ -1,6 +1,6 @@
 import type { CallGraphData } from '../../shared/types';
-import type { GraphViewModel } from '../core/types';
-import { makeEdgeId } from '../core/util';
+import type { GraphViewModel } from '../common/types';
+import { makeEdgeId } from '../common/util';
 
 /**
  * Extension Host から受け取った `CallGraphData` から、Webview 内部表示用の `GraphViewModel` を生成する。

@@ -1,5 +1,5 @@
-import { svg, viewport } from './dom';
-import { getLayoutPosition, getTransform, setTransform } from './state';
+import { svg, viewport } from '../dom/dom';
+import { getLayoutPosition, getTransform, setTransform } from '../common/state';
 
 /**
  * `state.ts` が保持する現在の `Transform` を SVG `viewport` 要素の

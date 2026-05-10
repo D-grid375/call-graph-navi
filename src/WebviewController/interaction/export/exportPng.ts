@@ -1,5 +1,5 @@
-import { vscode, svg } from '../../core/dom';
-import { getPngExportScale } from '../../core/state';
+import { vscode, svg } from '../../dom/dom';
+import { getPngExportScale } from '../../common/state';
 import { inlineStyles, fitToGraphBounds } from './exportUtil';
 
 /**

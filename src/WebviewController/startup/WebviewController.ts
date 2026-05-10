@@ -20,25 +20,29 @@ import {
   searchInput,
   svg,
   viewport,
-} from './core/dom';
-import { updateExtensionOptions } from './core/state';
+} from '../dom/dom';
+import {
+  restoreState,
+  setViewModel,
+  updateExtensionOptions,
+} from '../common/state';
 import {
   exportPlantUml,
   hideAllNodes,
   showAllNodes,
-} from './feature/buttonActions';
-import { exportSvgToFile } from './feature/export/exportSvg';
-import { exportPngToFile } from './feature/export/exportPng';
+} from '../interaction/buttonActions';
+import { exportSvgToFile } from '../interaction/export/exportSvg';
+import { exportPngToFile } from '../interaction/export/exportPng';
 import {
   handleWindowClickForExportMenu,
   handleWindowKeyDownForExportMenu,
   hideExportMenu,
   toggleExportMenu,
-} from './feature/export/exportMenu';
+} from '../interaction/export/exportMenu';
 import {
   handleViewportClick,
   handleViewportContextMenu,
-} from './feature/nodeInteraction/nodeInteraction';
+} from '../interaction/nodeInteraction/nodeInteraction';
 import {
   handleContextMenuIncomingClick,
   handleContextMenuOutgoingClick,
@@ -46,31 +50,30 @@ import {
   handleWindowClickForContextMenu,
   handleWindowKeyDownForContextMenu,
   hideNodeContextMenu,
-} from './feature/nodeInteraction/nodeContextMenu';
-import { handleFolderClick } from './feature/nodeInteraction/folderInteraction';
-import { handleNodeRemoveClick } from './feature/nodeInteraction/nodeRemove';
+} from '../interaction/nodeInteraction/nodeContextMenu';
+import { handleFolderClick } from '../interaction/nodeInteraction/folderInteraction';
+import { handleNodeRemoveClick } from '../interaction/nodeInteraction/nodeRemove';
 import {
   handleInfoTreeFileClick,
   handleInfoTreeNodeClick,
   setupInfoTreeToggle,
-} from './feature/infoTree';
+} from '../interaction/infoTree';
 import {
   handleSearchInputKeyDown,
   handleSearchNextClick,
   handleSearchPrevClick,
   resetSearchUiState,
-} from './feature/nodeSearchInteraction';
+} from '../interaction/nodeSearchInteraction';
 import {
   handleSvgMouseDown,
   handleSvgWheel,
   handleViewportMouseDown,
   handleWindowMouseMove,
   handleWindowMouseUp,
-} from './feature/panZoom';
-import { renderGraph } from './feature/render';
-import { restoreState, setViewModel } from './core/state';
-import { applyTransform, resetView } from './core/viewport';
-import { createGraphViewModel } from './feature/viewModel';
+} from '../interaction/panZoom';
+import { renderGraph } from '../viewport/render';
+import { applyTransform, resetView } from '../transformUI/viewport';
+import { createGraphViewModel } from '../viewmodel/viewModel';
 
 // info パネルのアコーディオントグル初期化
 setupInfoTreeToggle();

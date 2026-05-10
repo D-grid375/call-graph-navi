@@ -1,6 +1,6 @@
-import { svg, viewport } from '../core/dom';
-import { getTransform, setTransform } from '../core/state';
-import { applyTransform } from '../core/viewport';
+import { svg, viewport } from '../dom/dom';
+import { getTransform, setTransform } from '../common/state';
+import { applyTransform } from '../transformUI/viewport';
 
 let isPanning = false;
 let panStart = { x: 0, y: 0 };

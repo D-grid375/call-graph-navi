@@ -1,7 +1,7 @@
 import { showNodeContextMenu } from './nodeContextMenu';
 import { handleNodeClick } from './nodeClick';
-import { getViewModel } from '../../core/state';
-import type { GraphViewModel, NodeVM } from '../../core/types';
+import { getViewModel } from '../../common/state';
+import type { GraphViewModel, NodeVM } from '../../common/types';
 
 /**
  * viewport 上の click イベントをノードクリックとして処理する委譲ハンドラ。

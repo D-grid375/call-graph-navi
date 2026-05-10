@@ -1,4 +1,4 @@
-import { viewport, tooltip } from './dom';
+import { viewport, tooltip } from '../dom/dom';
 import type { NodeVM } from './types';
 
 export const NODE_LABEL_MARGIN_LEFT = 12;

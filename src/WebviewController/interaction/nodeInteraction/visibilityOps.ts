@@ -1,4 +1,4 @@
-import type { EdgeVM, GraphViewModel } from '../../core/types';
+import type { EdgeVM, GraphViewModel } from '../../common/types';
 import { collectRemovedNodeIds } from './folderInteraction'
 
 export function unhideFile(vm: GraphViewModel, filePath: string): void {

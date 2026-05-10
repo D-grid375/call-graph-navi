@@ -1,4 +1,4 @@
-import { vscode } from './dom';
+import { vscode } from '../dom/dom';
 import type { GraphViewModel, SearchState, Transform } from './types';
 import { ExtensionOptions } from '../../shared/types';
 
