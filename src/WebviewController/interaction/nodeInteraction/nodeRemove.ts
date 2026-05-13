@@ -1,6 +1,6 @@
 import { renderGraph } from '../../viewport/render';
 import { hideNodeContextMenu } from './nodeContextMenu';
-import { hideNodes, pruneUnreachableFromRoot } from './visibilityOps';
+import { hideNodes, hideUnreachableNodes } from './visibilityOps';
 import { getViewModel } from '../../viewmodel/viewModel';
 
 /**
@@ -39,7 +39,7 @@ export function nodeRemoveFromVM(nodeId: string): void {
   }
 
   hideNodes(vm, new Set([nodeId]));
-  pruneUnreachableFromRoot(vm);
+  hideUnreachableNodes(vm);
 
   renderGraph(false);
 }

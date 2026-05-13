@@ -1,4 +1,4 @@
-import { vscode } from '../../common/types';
+import { vscode } from '../../common/vscodeAPI';
 import { getGraphOrientation } from '../../settings/settings';
 import {
   getViewModel,

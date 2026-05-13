@@ -7,7 +7,7 @@ import {
 import type { FileGroup } from '../../shared/types';
 import { fileRemoveFromVM } from './nodeInteraction/folderInteraction';
 import { nodeRemoveFromVM } from './nodeInteraction/nodeRemove';
-import { unhideNode, unhideFile, pruneUnreachableFromRoot } from './nodeInteraction/visibilityOps';
+import { unhideNode, unhideFile, hideUnreachableNodes } from './nodeInteraction/visibilityOps';
 import { renderGraph } from '../viewport/render';
 
 let expanded = false;
@@ -48,9 +48,11 @@ export function handleInfoTreeFileClick(event: MouseEvent): void {
   if (checkbox.checked) {
     // 再表示処理
     const vm = getViewModel();
-    if (!vm) { return; }
+    if (!vm) {
+      return;
+    }
     unhideFile(vm, filePath);
-    pruneUnreachableFromRoot(vm);
+    hideUnreachableNodes(vm);
     renderGraph(false);
   } else {
     // 非表示処理
@@ -74,9 +76,11 @@ export function handleInfoTreeNodeClick(event: MouseEvent): void {
   if (checkbox.checked) {
     // 再表示処理
     const vm = getViewModel();
-    if (!vm) { return; }
+    if (!vm) {
+      return;
+    }
     unhideNode(vm, nodeId);
-    pruneUnreachableFromRoot(vm);
+    hideUnreachableNodes(vm);
     renderGraph(false);
   } else {
     // 非表示処理

@@ -2,7 +2,7 @@ import {
   getViewModel,
   type GraphViewModel,
 } from '../../viewmodel/viewModel';
-import { buildAdjacencyMaps, collectReachable } from './visibilityOps';
+import { collectReachableNodes } from './visibilityOps';
 
 /**
  * Path Visualize モードでの経路可視化を ViewModel に反映する。
@@ -36,9 +36,16 @@ export function applyPathVisualization(clickedNodeId: string): void {
     return;
   }
 
-  const { adjacency, reverseAdjacency } = buildAdjacencyMaps(vm.edges);
-  const reachableFromSource = collectReachable(sourceId, adjacency);
-  const canReachTarget = collectReachable(targetId, reverseAdjacency);
+  const reachableFromSource = collectReachableNodes(
+    sourceId,
+    vm.edges,
+    'forward'
+  );
+  const canReachTarget = collectReachableNodes(
+    targetId,
+    vm.edges,
+    'reverse'
+  );
   const pathNodeIds = new Set<string>();
   const pathEdgeIds = new Set<string>();
 

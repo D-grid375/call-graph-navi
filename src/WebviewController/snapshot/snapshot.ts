@@ -1,5 +1,5 @@
 import type { ExtensionOptions } from '../../shared/types';
-import { vscode } from '../common/types';
+import { vscode } from '../common/vscodeAPI';
 import { getExtensionOptions, updateExtensionOptions } from '../settings/settings';
 import { getTransform, setTransform, type Transform } from '../transformUI/viewport';
 import {

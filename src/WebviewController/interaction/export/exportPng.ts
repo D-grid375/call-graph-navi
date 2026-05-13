@@ -1,4 +1,4 @@
-import { vscode } from '../../common/types';
+import { vscode } from '../../common/vscodeAPI';
 import { svg } from '../../dom/dom';
 import { getPngExportScale } from '../../settings/settings';
 import { inlineStyles, fitToGraphBounds } from './exportUtil';

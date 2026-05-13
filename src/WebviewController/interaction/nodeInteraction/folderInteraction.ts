@@ -1,7 +1,7 @@
 import { renderGraph } from '../../viewport/render';
 import { getViewModel, type GraphViewModel } from '../../viewmodel/viewModel';
 import { hideNodeContextMenu } from './nodeContextMenu';
-import { hideNodes, pruneUnreachableFromRoot } from './visibilityOps';
+import { hideNodes, hideUnreachableNodes } from './visibilityOps';
 
 /**
  * ファイルグループヘッダの × ボタン押下（フォルダ閉じ）時のハンドラ。
@@ -37,13 +37,13 @@ export function fileRemoveFromVM(filePath: string): void {
     return;
   }
 
-  const removedNodeIds = collectRemovedNodeIds(vm, filePath);
+  const removedNodeIds = getNodeIdsFromFilePath(vm, filePath);
   if (removedNodeIds.size === 0 || removedNodeIds.has(vm.rootNodeId)) {
     return;
   }
 
   hideNodes(vm, removedNodeIds);
-  pruneUnreachableFromRoot(vm);
+  hideUnreachableNodes(vm);
 
   renderGraph(false);
 }
@@ -56,7 +56,7 @@ export function fileRemoveFromVM(filePath: string): void {
  * @param filePath 閉じたいファイルのパス
  * @returns 非表示化対象ノード ID の集合
  */
-export function collectRemovedNodeIds(
+export function getNodeIdsFromFilePath(
   vm: GraphViewModel,
   filePath: string
 ): Set<string> {

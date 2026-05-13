@@ -25,7 +25,7 @@
   var btnSearchNext = document.getElementById("btn-search-next");
   var searchIndicator = document.getElementById("search-indicator");
 
-  // src/WebviewController/common/types.ts
+  // src/WebviewController/common/vscodeAPI.ts
   var vscode = acquireVsCodeApi();
 
   // src/WebviewController/settings/settings.ts
@@ -156,7 +156,7 @@
 
   // src/WebviewController/interaction/nodeInteraction/visibilityOps.ts
   function unhideFile(vm, filePath) {
-    const unhideNodeIds = collectRemovedNodeIds(vm, filePath);
+    const unhideNodeIds = getNodeIdsFromFilePath(vm, filePath);
     if (unhideNodeIds.size === 0) {
       return;
     }
@@ -170,20 +170,10 @@
         node.view.visibility = "visible";
       }
     }
-    var matchingEdges;
-    if (vm.direction === "incoming") {
-      matchingEdges = vm.edges.filter((edge) => edge.from === nodeId);
-    } else {
-      matchingEdges = vm.edges.filter((edge) => edge.to === nodeId);
-    }
+    const matchingEdges = vm.direction === "incoming" ? vm.edges.filter((edge) => edge.from === nodeId) : vm.edges.filter((edge) => edge.to === nodeId);
     for (const edge of matchingEdges) {
       edge.view.visibility = "visible";
-      var targetNode;
-      if (vm.direction === "incoming") {
-        targetNode = vm.nodes.find((node) => node.id === edge.to);
-      } else {
-        targetNode = vm.nodes.find((node) => node.id === edge.from);
-      }
+      const targetNode = vm.direction === "incoming" ? vm.nodes.find((node) => node.id === edge.to) : vm.nodes.find((node) => node.id === edge.from);
       if (targetNode && targetNode.view.visibility === "hidden") {
         unhideNode(vm, targetNode.id);
       }
@@ -202,12 +192,12 @@
       }
     }
   }
-  function pruneUnreachableFromRoot(vm) {
+  function hideUnreachableNodes(vm) {
     const rootNode = vm.nodes.find((node) => node.id === vm.rootNodeId);
     if (!rootNode || rootNode.view.visibility !== "visible") {
       return;
     }
-    const reachableNodeIds = collectReachableFromRoot(vm);
+    const reachableNodeIds = collectVisibleReachableNodes(vm);
     for (const node of vm.nodes) {
       if (!reachableNodeIds.has(node.id)) {
         node.view.visibility = "hidden";
@@ -220,18 +210,18 @@
       }
     }
   }
-  function collectReachableFromRoot(vm) {
+  function collectVisibleReachableNodes(vm) {
     const visibleNodeIds = new Set(
       vm.nodes.filter((node) => node.view.visibility === "visible").map((node) => node.id)
     );
     const visibleEdges = vm.edges.filter(
       (edge) => edge.view.visibility === "visible" && visibleNodeIds.has(edge.from) && visibleNodeIds.has(edge.to)
     );
-    const adjacency = buildAdjacencyMap(
+    return collectReachableNodes(
+      vm.rootNodeId,
       visibleEdges,
       vm.direction === "incoming" ? "reverse" : "forward"
     );
-    return collectReachable(vm.rootNodeId, adjacency);
   }
   function buildAdjacencyMap(edges, direction) {
     const adjacency = /* @__PURE__ */ new Map();
@@ -245,13 +235,8 @@
     }
     return adjacency;
   }
-  function buildAdjacencyMaps(edges) {
-    return {
-      adjacency: buildAdjacencyMap(edges, "forward"),
-      reverseAdjacency: buildAdjacencyMap(edges, "reverse")
-    };
-  }
-  function collectReachable(startId, adjacency) {
+  function collectReachableNodes(startId, edges, direction) {
+    const adjacency = buildAdjacencyMap(edges, direction);
     const visited = /* @__PURE__ */ new Set();
     const stack = [startId];
     while (stack.length > 0) {
@@ -286,9 +271,16 @@
       }
       return;
     }
-    const { adjacency, reverseAdjacency } = buildAdjacencyMaps(vm.edges);
-    const reachableFromSource = collectReachable(sourceId, adjacency);
-    const canReachTarget = collectReachable(targetId, reverseAdjacency);
+    const reachableFromSource = collectReachableNodes(
+      sourceId,
+      vm.edges,
+      "forward"
+    );
+    const canReachTarget = collectReachableNodes(
+      targetId,
+      vm.edges,
+      "reverse"
+    );
     const pathNodeIds = /* @__PURE__ */ new Set();
     const pathEdgeIds = /* @__PURE__ */ new Set();
     for (const node of vm.nodes) {
@@ -408,15 +400,15 @@
     if (!vm) {
       return;
     }
-    const removedNodeIds = collectRemovedNodeIds(vm, filePath);
+    const removedNodeIds = getNodeIdsFromFilePath(vm, filePath);
     if (removedNodeIds.size === 0 || removedNodeIds.has(vm.rootNodeId)) {
       return;
     }
     hideNodes(vm, removedNodeIds);
-    pruneUnreachableFromRoot(vm);
+    hideUnreachableNodes(vm);
     renderGraph(false);
   }
-  function collectRemovedNodeIds(vm, filePath) {
+  function getNodeIdsFromFilePath(vm, filePath) {
     const file = vm.files.find((item) => item.filePath === filePath);
     if (file) {
       return new Set(file.nodeIds);
@@ -450,7 +442,7 @@
       return;
     }
     hideNodes(vm, /* @__PURE__ */ new Set([nodeId]));
-    pruneUnreachableFromRoot(vm);
+    hideUnreachableNodes(vm);
     renderGraph(false);
   }
 
@@ -492,7 +484,7 @@
         return;
       }
       unhideFile(vm, filePath);
-      pruneUnreachableFromRoot(vm);
+      hideUnreachableNodes(vm);
       renderGraph(false);
     } else {
       fileRemoveFromVM(filePath);
@@ -516,7 +508,7 @@
         return;
       }
       unhideNode(vm, nodeId);
-      pruneUnreachableFromRoot(vm);
+      hideUnreachableNodes(vm);
       renderGraph(false);
     } else {
       nodeRemoveFromVM(nodeId);

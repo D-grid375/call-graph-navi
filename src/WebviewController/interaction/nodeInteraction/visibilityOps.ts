@@ -1,15 +1,23 @@
 import type { EdgeVM, GraphViewModel } from '../../viewmodel/viewModel';
-import { collectRemovedNodeIds } from './folderInteraction'
+import { getNodeIdsFromFilePath } from './folderInteraction';
 
+/**
+ * 指定ファイルに含まれるノードを再表示する。
+ */
 export function unhideFile(vm: GraphViewModel, filePath: string): void {
-  const unhideNodeIds = collectRemovedNodeIds(vm, filePath);
-  if (unhideNodeIds.size === 0) { return; }
+  const unhideNodeIds = getNodeIdsFromFilePath(vm, filePath);
+  if (unhideNodeIds.size === 0) {
+    return;
+  }
 
   for (const nodeId of unhideNodeIds) {
     unhideNode(vm, nodeId);
   }
 }
 
+/**
+ * 指定ノードを再表示し、表示中グラフとの接続に必要な隣接ノードも再表示する。
+ */
 export function unhideNode(vm: GraphViewModel, nodeId: string): void {
   // ノード表示
   for (const node of vm.nodes) {
@@ -19,23 +27,20 @@ export function unhideNode(vm: GraphViewModel, nodeId: string): void {
   }
 
   // ノードからルート方向に延びるエッジを抽出
-  var matchingEdges;
-  if (vm.direction === 'incoming') {
-    matchingEdges = vm.edges.filter((edge) => edge.from === nodeId);
-  } else {
-    matchingEdges = vm.edges.filter((edge) => edge.to === nodeId);
-  }
+  const matchingEdges =
+    vm.direction === 'incoming'
+      ? vm.edges.filter((edge) => edge.from === nodeId)
+      : vm.edges.filter((edge) => edge.to === nodeId);
 
   // エッジから隣接ノードを取得し再帰的に表示有効化
   for (const edge of matchingEdges) {
     edge.view.visibility = 'visible'; // エッジは必ず非表示中なので無条件で再表示
 
-    var targetNode; // エッジが持つルート側のノード
-    if (vm.direction === 'incoming') {
-      targetNode = vm.nodes.find((node) => node.id === edge.to);
-    } else {
-      targetNode = vm.nodes.find((node) => node.id === edge.from);
-    }
+    const targetNode =
+      vm.direction === 'incoming'
+        ? vm.nodes.find((node) => node.id === edge.to)
+        : vm.nodes.find((node) => node.id === edge.from);
+
     if (targetNode && targetNode.view.visibility === 'hidden') {
       unhideNode(vm, targetNode.id);
     }
@@ -70,13 +75,13 @@ export function hideNodes(vm: GraphViewModel, nodeIds: Set<string>): void {
  *
  * @param vm 対象 ViewModel（破壊的に更新される）
  */
-export function pruneUnreachableFromRoot(vm: GraphViewModel): void {
+export function hideUnreachableNodes(vm: GraphViewModel): void {
   const rootNode = vm.nodes.find((node) => node.id === vm.rootNodeId);
   if (!rootNode || rootNode.view.visibility !== 'visible') {
     return;
   }
 
-  const reachableNodeIds = collectReachableFromRoot(vm);
+  const reachableNodeIds = collectVisibleReachableNodes(vm);
   for (const node of vm.nodes) {
     if (!reachableNodeIds.has(node.id)) {
       node.view.visibility = 'hidden';
@@ -92,13 +97,9 @@ export function pruneUnreachableFromRoot(vm: GraphViewModel): void {
 }
 
 /**
- * 現在表示されているノード・エッジだけを対象に、ルートから到達可能なノード ID 集合を返す。
- * `direction` が `incoming` のときは保持エッジの向きが `caller -> callee` なので逆方向 BFS を行う。
- *
- * @param vm 対象 ViewModel
- * @returns ルートから到達可能なノード ID の集合
+ * 現在表示中のノードとエッジだけを対象に、ルートから到達できるノードID集合を返す。
  */
-function collectReachableFromRoot(vm: GraphViewModel): Set<string> {
+function collectVisibleReachableNodes(vm: GraphViewModel): Set<string> {
   const visibleNodeIds = new Set(
     vm.nodes
       .filter((node) => node.view.visibility === 'visible')
@@ -110,11 +111,12 @@ function collectReachableFromRoot(vm: GraphViewModel): Set<string> {
       visibleNodeIds.has(edge.from) &&
       visibleNodeIds.has(edge.to)
   );
-  const adjacency = buildAdjacencyMap(
+
+  return collectReachableNodes(
+    vm.rootNodeId,
     visibleEdges,
     vm.direction === 'incoming' ? 'reverse' : 'forward'
   );
-  return collectReachable(vm.rootNodeId, adjacency);
 }
 
 /**
@@ -145,32 +147,14 @@ function buildAdjacencyMap(
 }
 
 /**
- * エッジ配列から順方向・逆方向の隣接リストを同時に構築する。
- *
- * @param edges 対象エッジ
- * @returns `adjacency`（`from -> to[]`）と `reverseAdjacency`（`to -> from[]`）
+ * 指定ノードから、指定方向のエッジをたどって到達できるノードID集合を返す。
  */
-export function buildAdjacencyMaps(edges: EdgeVM[]): {
-  adjacency: Map<string, string[]>;
-  reverseAdjacency: Map<string, string[]>;
-} {
-  return {
-    adjacency: buildAdjacencyMap(edges, 'forward'),
-    reverseAdjacency: buildAdjacencyMap(edges, 'reverse'),
-  };
-}
-
-/**
- * 開始ノードから隣接リストに従って DFS 探索し、到達可能なノード ID 集合を返す。
- *
- * @param startId 起点ノード ID
- * @param adjacency 隣接リストマップ
- * @returns 到達可能ノード ID の集合（開始ノードも含む）
- */
-export function collectReachable(
+export function collectReachableNodes(
   startId: string,
-  adjacency: Map<string, string[]>
+  edges: EdgeVM[],
+  direction: 'forward' | 'reverse'
 ): Set<string> {
+  const adjacency = buildAdjacencyMap(edges, direction);
   const visited = new Set<string>();
   const stack = [startId];
 
