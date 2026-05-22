@@ -1,7 +1,6 @@
-import { renderGraph } from '../../viewport/render';
+import { renderViewport } from '../../viewport/render';
 import { hideNodeContextMenu } from './nodeContextMenu';
-import { hideNodes, hideUnreachableNodes } from './visibilityOps';
-import { getViewModel } from '../../viewmodel/viewModel';
+import { getViewModel, hideNodes, hideUnreachableNodes } from '../../viewmodel/viewModel';
 
 /**
  * ノード矩形の × ボタン押下（ノード単体閉じ）時のハンドラ。
@@ -41,5 +40,5 @@ export function nodeRemoveFromVM(nodeId: string): void {
   hideNodes(vm, new Set([nodeId]));
   hideUnreachableNodes(vm);
 
-  renderGraph(false);
+  renderViewport(false);
 }

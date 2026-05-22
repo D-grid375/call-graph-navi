@@ -27,28 +27,25 @@ import {
   exportPlantUml,
   hideAllNodes,
   showAllNodes,
-} from '../interaction/buttonActions';
-import { exportSvgToFile } from '../interaction/export/exportSvg';
-import { exportPngToFile } from '../interaction/export/exportPng';
+} from '../interaction/buttonInteraction/buttonActions';
+import { exportSvgToFile } from '../interaction/buttonInteraction/export/exportSvg';
+import { exportPngToFile } from '../interaction/buttonInteraction/export/exportPng';
 import {
   handleWindowClickForExportMenu,
   handleWindowKeyDownForExportMenu,
   hideExportMenu,
   toggleExportMenu,
-} from '../interaction/export/exportMenu';
-import {
-  handleViewportClick,
-  handleViewportContextMenu,
-} from '../interaction/nodeInteraction/nodeInteraction';
+} from '../interaction/buttonInteraction/export/exportMenu';
+import { handleViewportClick } from '../interaction/nodeInteraction/nodeClick';
+import { handleViewportContextMenu } from '../interaction/nodeInteraction/nodeContextMenu';
 import {
   handleContextMenuIncomingClick,
   handleContextMenuOutgoingClick,
   handleContextMenuShowPathToRootClick,
   handleWindowClickForContextMenu,
   handleWindowKeyDownForContextMenu,
-  hideNodeContextMenu,
 } from '../interaction/nodeInteraction/nodeContextMenu';
-import { handleFolderClick } from '../interaction/nodeInteraction/folderInteraction';
+import { handleFolderClick } from '../interaction/nodeInteraction/nodeClick';
 import { handleNodeRemoveClick } from '../interaction/nodeInteraction/nodeRemove';
 import {
   handleInfoTreeFileClick,
@@ -59,7 +56,6 @@ import {
   handleSearchInputKeyDown,
   handleSearchNextClick,
   handleSearchPrevClick,
-  resetSearchUiState,
 } from '../interaction/nodeSearchInteraction';
 import {
   handleSvgMouseDown,
@@ -68,7 +64,7 @@ import {
   handleWindowMouseMove,
   handleWindowMouseUp,
 } from '../interaction/panZoom';
-import { renderGraph, setRenderPersistStateCallback } from '../viewport/render';
+import { renderViewport, setRenderPersistStateCallback } from '../viewport/render';
 import {
   resetView,
   setTransformPersistStateCallback,
@@ -89,7 +85,7 @@ setupInfoTreeToggle();
 
 // ウィンドウ切り出し等で Webview が再生成された場合、前回の状態を復元する
 if (restoreState()) {
-  renderGraph(false);
+  renderViewport(false);
 }
 
 // WebviewManagerからのイベント受信
@@ -98,7 +94,7 @@ window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'updateGraph') {
     updateExtensionOptions(event.data.extensionOptions);       // 拡張機能設定値更新：グラフ描画に設定値を参照するため先にコール必要
     setViewModel(createGraphViewModel(event.data.graphData));  // 生データからViewModelを生成
-    renderGraph(true);                                         // ViewModelからグラフ描画
+    renderViewport(true);                                         // ViewModelからグラフ描画
   }
 });
 

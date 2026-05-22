@@ -1,4 +1,4 @@
-import { btnExport, exportMenu } from '../../dom/dom';
+import { btnExport, exportMenu } from '../../../dom/dom';
 
 /**
  * Export ドロップダウンメニューの開閉を切り替える。

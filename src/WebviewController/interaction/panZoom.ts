@@ -1,4 +1,4 @@
-import { svg, viewport } from '../dom/dom';
+import { svg } from '../dom/dom';
 import {
   getTransform,
   setTransform,

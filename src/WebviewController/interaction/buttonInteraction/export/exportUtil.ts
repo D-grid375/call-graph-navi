@@ -1,4 +1,4 @@
-import { svg, viewport } from '../../dom/dom';
+import { svg, viewport } from '../../../dom/dom';
 
 const EXPORT_PADDING = 20;
 

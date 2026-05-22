@@ -1,5 +1,5 @@
-import { renderGraph } from '../viewport/render';
-import { getViewModel } from '../viewmodel/viewModel';
+import { renderViewport } from '../../viewport/render';
+import { getViewModel } from '../../viewmodel/viewModel';
 import { exportPlantUmlToClipboard } from './export/exportPlantUml';
 
 /**
@@ -13,7 +13,7 @@ export function showAllNodes(): void {
     return;
   }
   setAllVisibility('visible');
-  renderGraph(false);
+  renderViewport(false);
 }
 
 /**
@@ -27,7 +27,7 @@ export function hideAllNodes(): void {
     return;
   }
   setAllHiddenExceptRoot();
-  renderGraph(false);
+  renderViewport(false);
 }
 
 /**

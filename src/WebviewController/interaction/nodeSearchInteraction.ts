@@ -5,7 +5,7 @@ import {
   setSearchState,
 } from '../serach/search';
 import { centerOnNode } from '../transformUI/viewport';
-import { renderGraph } from '../viewport/render';
+import { renderViewport } from '../viewport/render';
 import { getViewModel, type GraphViewModel } from '../viewmodel/viewModel';
 
 type SearchDirection = 1 | -1;
@@ -81,7 +81,7 @@ function clearSearchResults(): void {
   updateCurrentMatchClass(undefined);
 
   if (highlightChanged) {
-    renderGraph(false);
+    renderViewport(false);
   }
 }
 
@@ -118,7 +118,7 @@ function runSearch(query: string, initialIndex: number | 'last'): void {
   const refreshed = refreshSearchResults(query);
   if (refreshed.hitIds.length === 0) {
     if (refreshed.shouldRender) {
-      renderGraph(false);
+      renderViewport(false);
     }
     return;
   }
@@ -133,7 +133,7 @@ function runSearch(query: string, initialIndex: number | 'last'): void {
   updateIndicator(targetIndex, refreshed.hitIds.length);
 
   if (refreshed.shouldRender) {
-    renderGraph(false);
+    renderViewport(false);
   }
 
   centerOnNode(refreshed.hitIds[targetIndex]);
@@ -155,7 +155,7 @@ function navigateSearch(direction: SearchDirection): void {
 
   if (refreshed.hitIds.length === 0) {
     if (refreshed.shouldRender) {
-      renderGraph(false);
+      renderViewport(false);
     }
     return;
   }
@@ -179,7 +179,7 @@ function navigateSearch(direction: SearchDirection): void {
   updateIndicator(targetIndex, refreshed.hitIds.length);
 
   if (refreshed.shouldRender) {
-    renderGraph(false);
+    renderViewport(false);
   }
 
   centerOnNode(refreshed.hitIds[targetIndex]);

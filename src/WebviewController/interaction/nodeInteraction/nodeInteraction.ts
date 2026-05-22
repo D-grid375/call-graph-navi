@@ -1,40 +1,9 @@
-import { showNodeContextMenu } from './nodeContextMenu';
-import { handleNodeClick } from './nodeClick';
 import {
   getViewModel,
   type GraphViewModel,
   type NodeVM,
 } from '../../viewmodel/viewModel';
 
-/**
- * viewport 上の click イベントをノードクリックとして処理する委譲ハンドラ。
- * `main.ts` が viewport に 1 つだけ登録する想定で、イベントの target から対象ノードを解決し
- * {@link handleNodeClick} に振り分ける。ノード外クリックなら何もしない。
- *
- * @param event DOM の `click` イベント
- */
-export function handleViewportClick(event: MouseEvent): void {
-  const resolved = resolveNodeFromEventTarget(event.target);
-  if (!resolved) {
-    return;
-  }
-  handleNodeClick(resolved.vm, resolved.node, event);
-}
-
-/**
- * viewport 上の contextmenu イベントをノード右クリックとして処理する委譲ハンドラ。
- * イベントの target から対象ノードを解決し、{@link showNodeContextMenu} を呼び出す。
- * ノード外での右クリックでは何もしない（ブラウザ既定のメニューが出る想定）。
- *
- * @param event DOM の `contextmenu` イベント
- */
-export function handleViewportContextMenu(event: MouseEvent): void {
-  const resolved = resolveNodeFromEventTarget(event.target);
-  if (!resolved) {
-    return;
-  }
-  showNodeContextMenu(resolved.node, event);
-}
 
 /**
  * DOM イベントの target から対応する `NodeVM` を逆引きする。
@@ -43,7 +12,7 @@ export function handleViewportContextMenu(event: MouseEvent): void {
  * @param target イベントの `target`
  * @returns 見つかれば `{ vm, node }`、どれかが欠ける場合は null
  */
-function resolveNodeFromEventTarget(
+export function resolveNodeFromEventTarget(
   target: EventTarget | null
 ): { vm: GraphViewModel; node: NodeVM } | null {
   const element = target as Element | null;

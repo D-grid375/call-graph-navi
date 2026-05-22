@@ -1,5 +1,5 @@
-import { vscode } from '../../common/vscodeAPI';
-import { svg } from '../../dom/dom';
+import { vscode } from '../../../common/vscodeAPI';
+import { svg } from '../../../dom/dom';
 import { inlineStyles, fitToGraphBounds } from './exportUtil';
 
 /**

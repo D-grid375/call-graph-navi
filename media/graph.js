@@ -133,28 +133,6 @@
       }))
     };
   }
-
-  // src/WebviewController/snapshot/snapshot.ts
-  function persistState() {
-    const snapshot = {
-      viewModel: getViewModel(),
-      transform: getTransform(),
-      options: getExtensionOptions()
-    };
-    vscode.setState(snapshot);
-  }
-  function restoreState() {
-    const snapshot = vscode.getState();
-    if (!snapshot || !snapshot.viewModel) {
-      return false;
-    }
-    setViewModel(snapshot.viewModel);
-    setTransform(snapshot.transform);
-    updateExtensionOptions(snapshot.options);
-    return true;
-  }
-
-  // src/WebviewController/interaction/nodeInteraction/visibilityOps.ts
   function unhideFile(vm, filePath) {
     const unhideNodeIds = getNodeIdsFromFilePath(vm, filePath);
     if (unhideNodeIds.size === 0) {
@@ -179,6 +157,13 @@
       }
     }
   }
+  function hideFile(vm, filePath) {
+    const targetNodeIds = getNodeIdsFromFilePath(vm, filePath);
+    if (targetNodeIds.size === 0 || targetNodeIds.has(vm.rootNodeId)) {
+      return;
+    }
+    hideNodes(vm, targetNodeIds);
+  }
   function hideNodes(vm, nodeIds) {
     for (const node of vm.nodes) {
       if (nodeIds.has(node.id)) {
@@ -197,7 +182,7 @@
     if (!rootNode || rootNode.view.visibility !== "visible") {
       return;
     }
-    const reachableNodeIds = collectVisibleReachableNodes(vm);
+    const reachableNodeIds = collectVisibleReachableNodes(vm.rootNodeId, vm, "default");
     for (const node of vm.nodes) {
       if (!reachableNodeIds.has(node.id)) {
         node.view.visibility = "hidden";
@@ -210,30 +195,20 @@
       }
     }
   }
-  function collectVisibleReachableNodes(vm) {
+  function collectVisibleReachableNodes(startId, vm, direction) {
     const visibleNodeIds = new Set(
       vm.nodes.filter((node) => node.view.visibility === "visible").map((node) => node.id)
     );
     const visibleEdges = vm.edges.filter(
       (edge) => edge.view.visibility === "visible" && visibleNodeIds.has(edge.from) && visibleNodeIds.has(edge.to)
     );
-    return collectReachableNodes(
-      vm.rootNodeId,
-      visibleEdges,
-      vm.direction === "incoming" ? "reverse" : "forward"
-    );
-  }
-  function buildAdjacencyMap(edges, direction) {
-    const adjacency = /* @__PURE__ */ new Map();
-    for (const edge of edges) {
-      const from = direction === "forward" ? edge.from : edge.to;
-      const to = direction === "forward" ? edge.to : edge.from;
-      if (!adjacency.has(from)) {
-        adjacency.set(from, []);
-      }
-      adjacency.get(from).push(to);
+    var resolvedDirection;
+    if (direction === "default") {
+      resolvedDirection = vm.direction === "incoming" ? "reverse" : "forward";
+    } else {
+      resolvedDirection = direction;
     }
-    return adjacency;
+    return collectReachableNodes(startId, visibleEdges, resolvedDirection);
   }
   function collectReachableNodes(startId, edges, direction) {
     const adjacency = buildAdjacencyMap(edges, direction);
@@ -254,159 +229,17 @@
     }
     return visited;
   }
-
-  // src/WebviewController/interaction/nodeInteraction/pathVisualization.ts
-  function applyPathVisualization(clickedNodeId) {
-    const vm = getViewModel();
-    if (!vm) {
-      return;
-    }
-    const { sourceId, targetId } = getPathEndpoints(vm, clickedNodeId);
-    if (sourceId === targetId) {
-      for (const node of vm.nodes) {
-        node.view.visibility = node.id === sourceId ? "visible" : "hidden";
+  function buildAdjacencyMap(edges, direction) {
+    const adjacency = /* @__PURE__ */ new Map();
+    for (const edge of edges) {
+      const from = direction === "forward" ? edge.from : edge.to;
+      const to = direction === "forward" ? edge.to : edge.from;
+      if (!adjacency.has(from)) {
+        adjacency.set(from, []);
       }
-      for (const edge of vm.edges) {
-        edge.view.visibility = "hidden";
-      }
-      return;
+      adjacency.get(from).push(to);
     }
-    const reachableFromSource = collectReachableNodes(
-      sourceId,
-      vm.edges,
-      "forward"
-    );
-    const canReachTarget = collectReachableNodes(
-      targetId,
-      vm.edges,
-      "reverse"
-    );
-    const pathNodeIds = /* @__PURE__ */ new Set();
-    const pathEdgeIds = /* @__PURE__ */ new Set();
-    for (const node of vm.nodes) {
-      if (reachableFromSource.has(node.id) && canReachTarget.has(node.id)) {
-        pathNodeIds.add(node.id);
-      }
-    }
-    for (const edge of vm.edges) {
-      if (reachableFromSource.has(edge.from) && canReachTarget.has(edge.to)) {
-        pathEdgeIds.add(edge.id);
-      }
-    }
-    if (pathNodeIds.size === 0) {
-      pathNodeIds.add(vm.rootNodeId);
-      pathNodeIds.add(clickedNodeId);
-    }
-    for (const node of vm.nodes) {
-      node.view.visibility = pathNodeIds.has(node.id) ? "visible" : "hidden";
-    }
-    for (const edge of vm.edges) {
-      edge.view.visibility = pathEdgeIds.has(edge.id) ? "visible" : "hidden";
-    }
-  }
-  function getPathEndpoints(vm, clickedNodeId) {
-    if (vm.direction === "incoming") {
-      return { sourceId: clickedNodeId, targetId: vm.rootNodeId };
-    }
-    return { sourceId: vm.rootNodeId, targetId: clickedNodeId };
-  }
-
-  // src/WebviewController/interaction/nodeInteraction/nodeContextMenu.ts
-  var contextMenuNode = null;
-  function showNodeContextMenu(node, event) {
-    event.preventDefault();
-    event.stopPropagation();
-    contextMenuNode = node;
-    tooltip.classList.add("hidden");
-    contextMenu.style.left = `${event.clientX}px`;
-    contextMenu.style.top = `${event.clientY}px`;
-    contextMenu.classList.remove("hidden");
-    const menuRect = contextMenu.getBoundingClientRect();
-    const maxLeft = window.innerWidth - menuRect.width - 8;
-    const maxTop = window.innerHeight - menuRect.height - 8;
-    contextMenu.style.left = `${Math.max(8, Math.min(event.clientX, maxLeft))}px`;
-    contextMenu.style.top = `${Math.max(8, Math.min(event.clientY, maxTop))}px`;
-  }
-  function hideNodeContextMenu() {
-    const activeElement = document.activeElement;
-    if (activeElement && contextMenu.contains(activeElement)) {
-      activeElement.blur();
-    }
-    contextMenuNode = null;
-    contextMenu.classList.add("hidden");
-  }
-  function handleContextMenuOutgoingClick(event) {
-    handleContextMenuRequest(event, "outgoing");
-    hideNodeContextMenu();
-  }
-  function handleContextMenuIncomingClick(event) {
-    handleContextMenuRequest(event, "incoming");
-    hideNodeContextMenu();
-  }
-  function handleContextMenuShowPathToRootClick() {
-    if (!contextMenuNode) {
-      return;
-    }
-    applyPathVisualization(contextMenuNode.id);
-    renderGraph(true);
-    hideNodeContextMenu();
-  }
-  function handleWindowClickForContextMenu(event) {
-    const target = event.target;
-    if (target?.closest("#node-context-menu")) {
-      return;
-    }
-    hideNodeContextMenu();
-  }
-  function handleWindowKeyDownForContextMenu(event) {
-    if (event.key === "Escape") {
-      hideNodeContextMenu();
-    }
-  }
-  function handleContextMenuRequest(event, direction) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!contextMenuNode) {
-      hideNodeContextMenu();
-      return;
-    }
-    vscode.postMessage({
-      type: "requestGraphFromNode",
-      direction,
-      filePath: contextMenuNode.filePath,
-      line: contextMenuNode.line,
-      character: contextMenuNode.character
-    });
-    hideNodeContextMenu();
-  }
-
-  // src/WebviewController/interaction/nodeInteraction/folderInteraction.ts
-  function handleFolderClick(event) {
-    const target = event.target;
-    const button = target?.closest(".file-remove-button");
-    if (!button) {
-      return;
-    }
-    const filePath = button.dataset.filePath ?? button.closest(".file-group")?.getAttribute("data-file-path");
-    if (!filePath) {
-      return;
-    }
-    event.stopPropagation();
-    hideNodeContextMenu();
-    fileRemoveFromVM(filePath);
-  }
-  function fileRemoveFromVM(filePath) {
-    const vm = getViewModel();
-    if (!vm) {
-      return;
-    }
-    const removedNodeIds = getNodeIdsFromFilePath(vm, filePath);
-    if (removedNodeIds.size === 0 || removedNodeIds.has(vm.rootNodeId)) {
-      return;
-    }
-    hideNodes(vm, removedNodeIds);
-    hideUnreachableNodes(vm);
-    renderGraph(false);
+    return adjacency;
   }
   function getNodeIdsFromFilePath(vm, filePath) {
     const file = vm.files.find((item) => item.filePath === filePath);
@@ -418,45 +251,34 @@
     );
   }
 
-  // src/WebviewController/interaction/nodeInteraction/nodeRemove.ts
-  function handleNodeRemoveClick(event) {
-    const target = event.target;
-    const button = target?.closest(".node-remove-button");
-    if (!button) {
-      return;
-    }
-    const nodeId = button.dataset.nodeId;
-    if (!nodeId) {
-      return;
-    }
-    event.stopPropagation();
-    hideNodeContextMenu();
-    nodeRemoveFromVM(nodeId);
+  // src/WebviewController/snapshot/snapshot.ts
+  function persistState() {
+    const snapshot = {
+      viewModel: getViewModel(),
+      transform: getTransform(),
+      options: getExtensionOptions()
+    };
+    vscode.setState(snapshot);
   }
-  function nodeRemoveFromVM(nodeId) {
-    const vm = getViewModel();
-    if (!vm) {
-      return;
+  function restoreState() {
+    const snapshot = vscode.getState();
+    if (!snapshot || !snapshot.viewModel) {
+      return false;
     }
-    if (nodeId === vm.rootNodeId) {
-      return;
-    }
-    hideNodes(vm, /* @__PURE__ */ new Set([nodeId]));
-    hideUnreachableNodes(vm);
-    renderGraph(false);
+    setViewModel(snapshot.viewModel);
+    setTransform(snapshot.transform);
+    updateExtensionOptions(snapshot.options);
+    return true;
   }
 
-  // src/WebviewController/interaction/infoTree.ts
-  var expanded = false;
-  function setupInfoTreeToggle() {
-    applyExpandedState();
-    infoToggle.addEventListener("click", () => {
-      expanded = !expanded;
-      applyExpandedState();
-    });
+  // src/WebviewController/viewport/renderInfoTree.ts
+  function clearInfoTree() {
+    while (infoTree.firstChild) {
+      infoTree.removeChild(infoTree.firstChild);
+    }
   }
-  function applyExpandedState() {
-    if (expanded) {
+  function applyExpandedState(expanded2) {
+    if (expanded2) {
       infoTree.classList.remove("hidden");
       infoToggle.textContent = "-";
       infoToggle.setAttribute("aria-expanded", "true");
@@ -464,59 +286,6 @@
       infoTree.classList.add("hidden");
       infoToggle.textContent = "+";
       infoToggle.setAttribute("aria-expanded", "false");
-    }
-  }
-  function handleInfoTreeFileClick(event) {
-    const target = event.target;
-    const checkbox = target?.closest(
-      ".info-tree-checkbox-file"
-    );
-    if (!checkbox) {
-      return;
-    }
-    const filePath = checkbox.dataset.filePath;
-    if (!filePath) {
-      return;
-    }
-    if (checkbox.checked) {
-      const vm = getViewModel();
-      if (!vm) {
-        return;
-      }
-      unhideFile(vm, filePath);
-      hideUnreachableNodes(vm);
-      renderGraph(false);
-    } else {
-      fileRemoveFromVM(filePath);
-    }
-  }
-  function handleInfoTreeNodeClick(event) {
-    const target = event.target;
-    const checkbox = target?.closest(
-      ".info-tree-checkbox-node"
-    );
-    if (!checkbox) {
-      return;
-    }
-    const nodeId = checkbox.dataset.nodeId;
-    if (!nodeId) {
-      return;
-    }
-    if (checkbox.checked) {
-      const vm = getViewModel();
-      if (!vm) {
-        return;
-      }
-      unhideNode(vm, nodeId);
-      hideUnreachableNodes(vm);
-      renderGraph(false);
-    } else {
-      nodeRemoveFromVM(nodeId);
-    }
-  }
-  function clearInfoTree() {
-    while (infoTree.firstChild) {
-      infoTree.removeChild(infoTree.firstChild);
     }
   }
   function renderInfoTree(vm) {
@@ -638,7 +407,7 @@
     return result;
   }
 
-  // src/WebviewController/viewport/render.ts
+  // src/WebviewController/viewport/renderGraph.ts
   var PADDING = 20;
   var NODE_HEIGHT = 28;
   var FILE_REMOVE_BUTTON_SIZE = 16;
@@ -651,10 +420,6 @@
   var NODE_REMOVE_BUTTON_AREA = NODE_REMOVE_BUTTON_MARGIN_LEFT + NODE_REMOVE_BUTTON_SIZE + NODE_REMOVE_BUTTON_MARGIN_RIGHT;
   var NODE_LABEL_MARGIN_LEFT = 12;
   var NODE_LABEL_MARGIN_RIGHT = 12;
-  var persistStateCallback3;
-  function setRenderPersistStateCallback(callback) {
-    persistStateCallback3 = callback;
-  }
   function estimateWidth(text) {
     return Math.max(
       80,
@@ -714,19 +479,7 @@
     d += ` L${last.x},${last.y}`;
     return d;
   }
-  function renderGraph(resetViewport) {
-    const vm = getViewModel();
-    if (!vm) {
-      infoSummaryText.textContent = "No graph loaded.";
-      clearInfoTree();
-      clearViewport();
-      setLayoutPositions(/* @__PURE__ */ new Map());
-      return;
-    }
-    render(vm, resetViewport);
-    persistStateCallback3?.();
-  }
-  function render(viewModel, resetViewport) {
+  function renderGraph(viewModel, resetViewport) {
     const visibleNodes = viewModel.nodes.filter(
       (node) => node.view.visibility === "visible"
     );
@@ -956,7 +709,25 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/interaction/export/exportPlantUml.ts
+  // src/WebviewController/viewport/render.ts
+  var persistStateCallback3;
+  function setRenderPersistStateCallback(callback) {
+    persistStateCallback3 = callback;
+  }
+  function renderViewport(resetViewport) {
+    const vm = getViewModel();
+    if (!vm) {
+      infoSummaryText.textContent = "No graph loaded.";
+      clearInfoTree();
+      clearViewport();
+      setLayoutPositions(/* @__PURE__ */ new Map());
+      return;
+    }
+    renderGraph(vm, resetViewport);
+    persistStateCallback3?.();
+  }
+
+  // src/WebviewController/interaction/buttonInteraction/export/exportPlantUml.ts
   function exportPlantUmlToClipboard() {
     const vm = getViewModel();
     if (!vm) {
@@ -1029,14 +800,14 @@ Click: open source`;
     return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
-  // src/WebviewController/interaction/buttonActions.ts
+  // src/WebviewController/interaction/buttonInteraction/buttonActions.ts
   function showAllNodes() {
     const vm = getViewModel();
     if (!vm) {
       return;
     }
     setAllVisibility("visible");
-    renderGraph(false);
+    renderViewport(false);
   }
   function hideAllNodes() {
     const vm = getViewModel();
@@ -1044,7 +815,7 @@ Click: open source`;
       return;
     }
     setAllHiddenExceptRoot();
-    renderGraph(false);
+    renderViewport(false);
   }
   function exportPlantUml() {
     const vm = getViewModel();
@@ -1078,7 +849,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/interaction/export/exportUtil.ts
+  // src/WebviewController/interaction/buttonInteraction/export/exportUtil.ts
   var EXPORT_PADDING = 20;
   function fitToGraphBounds(cloned) {
     const bbox = viewport.getBBox();
@@ -1133,7 +904,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/interaction/export/exportSvg.ts
+  // src/WebviewController/interaction/buttonInteraction/export/exportSvg.ts
   function exportSvgToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
@@ -1143,7 +914,7 @@ Click: open source`;
     vscode.postMessage({ type: "exportSvg", svgText });
   }
 
-  // src/WebviewController/interaction/export/exportPng.ts
+  // src/WebviewController/interaction/buttonInteraction/export/exportPng.ts
   function exportPngToFile() {
     const cloned = svg.cloneNode(true);
     inlineStyles(cloned);
@@ -1169,7 +940,7 @@ Click: open source`;
     img.src = svgDataUrl;
   }
 
-  // src/WebviewController/interaction/export/exportMenu.ts
+  // src/WebviewController/interaction/buttonInteraction/export/exportMenu.ts
   function toggleExportMenu(event) {
     event.stopPropagation();
     exportMenu.classList.toggle("hidden");
@@ -1190,35 +961,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/interaction/nodeInteraction/nodeClick.ts
-  function handleNodeClick(vm, node, event) {
-    event.stopPropagation();
-    if (event.shiftKey) {
-    } else {
-      vscode.postMessage({
-        type: "nodeClick",
-        filePath: node.filePath,
-        line: node.line,
-        character: node.character
-      });
-    }
-  }
-
   // src/WebviewController/interaction/nodeInteraction/nodeInteraction.ts
-  function handleViewportClick(event) {
-    const resolved = resolveNodeFromEventTarget(event.target);
-    if (!resolved) {
-      return;
-    }
-    handleNodeClick(resolved.vm, resolved.node, event);
-  }
-  function handleViewportContextMenu(event) {
-    const resolved = resolveNodeFromEventTarget(event.target);
-    if (!resolved) {
-      return;
-    }
-    showNodeContextMenu(resolved.node, event);
-  }
   function resolveNodeFromEventTarget(target) {
     const element = target;
     if (element?.closest(".node-remove-button")) {
@@ -1241,6 +984,269 @@ Click: open source`;
       return null;
     }
     return { vm, node };
+  }
+
+  // src/WebviewController/interaction/nodeInteraction/nodeContextMenu.ts
+  var contextMenuNode = null;
+  function handleViewportContextMenu(event) {
+    const resolved = resolveNodeFromEventTarget(event.target);
+    if (!resolved) {
+      return;
+    }
+    showNodeContextMenu(resolved.node, event);
+  }
+  function showNodeContextMenu(node, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    contextMenuNode = node;
+    tooltip.classList.add("hidden");
+    contextMenu.style.left = `${event.clientX}px`;
+    contextMenu.style.top = `${event.clientY}px`;
+    contextMenu.classList.remove("hidden");
+    const menuRect = contextMenu.getBoundingClientRect();
+    const maxLeft = window.innerWidth - menuRect.width - 8;
+    const maxTop = window.innerHeight - menuRect.height - 8;
+    contextMenu.style.left = `${Math.max(8, Math.min(event.clientX, maxLeft))}px`;
+    contextMenu.style.top = `${Math.max(8, Math.min(event.clientY, maxTop))}px`;
+  }
+  function hideNodeContextMenu() {
+    const activeElement = document.activeElement;
+    if (activeElement && contextMenu.contains(activeElement)) {
+      activeElement.blur();
+    }
+    contextMenuNode = null;
+    contextMenu.classList.add("hidden");
+  }
+  function handleContextMenuOutgoingClick(event) {
+    handleContextMenuRequest(event, "outgoing");
+    hideNodeContextMenu();
+  }
+  function handleContextMenuIncomingClick(event) {
+    handleContextMenuRequest(event, "incoming");
+    hideNodeContextMenu();
+  }
+  function handleContextMenuShowPathToRootClick() {
+    if (!contextMenuNode) {
+      return;
+    }
+    applyPathVisualization(contextMenuNode.id);
+    renderViewport(true);
+    hideNodeContextMenu();
+  }
+  function handleWindowClickForContextMenu(event) {
+    const target = event.target;
+    if (target?.closest("#node-context-menu")) {
+      return;
+    }
+    hideNodeContextMenu();
+  }
+  function handleWindowKeyDownForContextMenu(event) {
+    if (event.key === "Escape") {
+      hideNodeContextMenu();
+    }
+  }
+  function applyPathVisualization(clickedNodeId) {
+    const vm = getViewModel();
+    if (!vm) {
+      return;
+    }
+    const { sourceId, targetId } = getPathEndpoints(vm, clickedNodeId);
+    if (sourceId === targetId) {
+      for (const node of vm.nodes) {
+        node.view.visibility = node.id === sourceId ? "visible" : "hidden";
+      }
+      for (const edge of vm.edges) {
+        edge.view.visibility = "hidden";
+      }
+      return;
+    }
+    const reachableFromSource = collectReachableNodes(
+      sourceId,
+      vm.edges,
+      "forward"
+    );
+    const canReachTarget = collectReachableNodes(
+      targetId,
+      vm.edges,
+      "reverse"
+    );
+    const pathNodeIds = /* @__PURE__ */ new Set();
+    const pathEdgeIds = /* @__PURE__ */ new Set();
+    for (const node of vm.nodes) {
+      if (reachableFromSource.has(node.id) && canReachTarget.has(node.id)) {
+        pathNodeIds.add(node.id);
+      }
+    }
+    for (const edge of vm.edges) {
+      if (reachableFromSource.has(edge.from) && canReachTarget.has(edge.to)) {
+        pathEdgeIds.add(edge.id);
+      }
+    }
+    if (pathNodeIds.size === 0) {
+      pathNodeIds.add(vm.rootNodeId);
+      pathNodeIds.add(clickedNodeId);
+    }
+    for (const node of vm.nodes) {
+      node.view.visibility = pathNodeIds.has(node.id) ? "visible" : "hidden";
+    }
+    for (const edge of vm.edges) {
+      edge.view.visibility = pathEdgeIds.has(edge.id) ? "visible" : "hidden";
+    }
+  }
+  function handleContextMenuRequest(event, direction) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!contextMenuNode) {
+      hideNodeContextMenu();
+      return;
+    }
+    vscode.postMessage({
+      type: "requestGraphFromNode",
+      direction,
+      filePath: contextMenuNode.filePath,
+      line: contextMenuNode.line,
+      character: contextMenuNode.character
+    });
+    hideNodeContextMenu();
+  }
+  function getPathEndpoints(vm, clickedNodeId) {
+    if (vm.direction === "incoming") {
+      return { sourceId: clickedNodeId, targetId: vm.rootNodeId };
+    }
+    return { sourceId: vm.rootNodeId, targetId: clickedNodeId };
+  }
+
+  // src/WebviewController/interaction/nodeInteraction/nodeClick.ts
+  function handleViewportClick(event) {
+    const resolved = resolveNodeFromEventTarget(event.target);
+    if (!resolved) {
+      return;
+    }
+    handleNodeClick(resolved.vm, resolved.node, event);
+  }
+  function handleNodeClick(vm, node, event) {
+    event.stopPropagation();
+    if (event.shiftKey) {
+    } else {
+      vscode.postMessage({
+        type: "nodeClick",
+        filePath: node.filePath,
+        line: node.line,
+        character: node.character
+      });
+    }
+  }
+  function handleFolderClick(event) {
+    const target = event.target;
+    const button = target?.closest(".file-remove-button");
+    if (!button) {
+      return;
+    }
+    const filePath = button.dataset.filePath ?? button.closest(".file-group")?.getAttribute("data-file-path");
+    if (!filePath) {
+      return;
+    }
+    event.stopPropagation();
+    hideNodeContextMenu();
+    const vm = getViewModel();
+    if (!vm) {
+      return;
+    }
+    hideFile(vm, filePath);
+    hideUnreachableNodes(vm);
+    renderViewport(false);
+  }
+
+  // src/WebviewController/interaction/nodeInteraction/nodeRemove.ts
+  function handleNodeRemoveClick(event) {
+    const target = event.target;
+    const button = target?.closest(".node-remove-button");
+    if (!button) {
+      return;
+    }
+    const nodeId = button.dataset.nodeId;
+    if (!nodeId) {
+      return;
+    }
+    event.stopPropagation();
+    hideNodeContextMenu();
+    nodeRemoveFromVM(nodeId);
+  }
+  function nodeRemoveFromVM(nodeId) {
+    const vm = getViewModel();
+    if (!vm) {
+      return;
+    }
+    if (nodeId === vm.rootNodeId) {
+      return;
+    }
+    hideNodes(vm, /* @__PURE__ */ new Set([nodeId]));
+    hideUnreachableNodes(vm);
+    renderViewport(false);
+  }
+
+  // src/WebviewController/interaction/infoTree.ts
+  var expanded = false;
+  function setupInfoTreeToggle() {
+    applyExpandedState(expanded);
+    infoToggle.addEventListener("click", () => {
+      expanded = !expanded;
+      applyExpandedState(expanded);
+    });
+  }
+  function handleInfoTreeFileClick(event) {
+    const target = event.target;
+    const checkbox = target?.closest(
+      ".info-tree-checkbox-file"
+    );
+    if (!checkbox) {
+      return;
+    }
+    const filePath = checkbox.dataset.filePath;
+    if (!filePath) {
+      return;
+    }
+    if (checkbox.checked) {
+      const vm = getViewModel();
+      if (!vm) {
+        return;
+      }
+      unhideFile(vm, filePath);
+      hideUnreachableNodes(vm);
+      renderViewport(false);
+    } else {
+      const vm = getViewModel();
+      if (!vm) {
+        return;
+      }
+      hideFile(vm, filePath);
+      hideUnreachableNodes(vm);
+      renderViewport(false);
+    }
+  }
+  function handleInfoTreeNodeClick(event) {
+    const target = event.target;
+    const checkbox = target?.closest(
+      ".info-tree-checkbox-node"
+    );
+    if (!checkbox) {
+      return;
+    }
+    const nodeId = checkbox.dataset.nodeId;
+    if (!nodeId) {
+      return;
+    }
+    if (checkbox.checked) {
+      const vm = getViewModel();
+      if (!vm) {
+        return;
+      }
+      unhideNode(vm, nodeId);
+      hideUnreachableNodes(vm);
+      renderViewport(false);
+    } else {
+      nodeRemoveFromVM(nodeId);
+    }
   }
 
   // src/WebviewController/serach/search.ts
@@ -1288,7 +1294,7 @@ Click: open source`;
     updateIndicator(-1, 0);
     updateCurrentMatchClass(void 0);
     if (highlightChanged) {
-      renderGraph(false);
+      renderViewport(false);
     }
   }
   function handleSearchButtonClick(direction) {
@@ -1308,7 +1314,7 @@ Click: open source`;
     const refreshed = refreshSearchResults(query);
     if (refreshed.hitIds.length === 0) {
       if (refreshed.shouldRender) {
-        renderGraph(false);
+        renderViewport(false);
       }
       return;
     }
@@ -1320,7 +1326,7 @@ Click: open source`;
     });
     updateIndicator(targetIndex, refreshed.hitIds.length);
     if (refreshed.shouldRender) {
-      renderGraph(false);
+      renderViewport(false);
     }
     centerOnNode(refreshed.hitIds[targetIndex]);
     updateCurrentMatchClass(refreshed.hitIds[targetIndex]);
@@ -1331,7 +1337,7 @@ Click: open source`;
     const refreshed = refreshSearchResults(previous.query, currentNodeId);
     if (refreshed.hitIds.length === 0) {
       if (refreshed.shouldRender) {
-        renderGraph(false);
+        renderViewport(false);
       }
       return;
     }
@@ -1347,7 +1353,7 @@ Click: open source`;
     });
     updateIndicator(targetIndex, refreshed.hitIds.length);
     if (refreshed.shouldRender) {
-      renderGraph(false);
+      renderViewport(false);
     }
     centerOnNode(refreshed.hitIds[targetIndex]);
     updateCurrentMatchClass(refreshed.hitIds[targetIndex]);
@@ -1481,13 +1487,13 @@ Click: open source`;
   setRenderPersistStateCallback(persistState);
   setupInfoTreeToggle();
   if (restoreState()) {
-    renderGraph(false);
+    renderViewport(false);
   }
   window.addEventListener("message", (event) => {
     if (event.data && event.data.type === "updateGraph") {
       updateExtensionOptions(event.data.extensionOptions);
       setViewModel(createGraphViewModel(event.data.graphData));
-      renderGraph(true);
+      renderViewport(true);
     }
   });
   btnReset.addEventListener("click", resetView);

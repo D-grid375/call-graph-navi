@@ -1,10 +1,10 @@
-import { vscode } from '../../common/vscodeAPI';
-import { getGraphOrientation } from '../../settings/settings';
+import { vscode } from '../../../common/vscodeAPI';
+import { getGraphOrientation } from '../../../settings/settings';
 import {
   getViewModel,
   type GraphViewModel,
   type NodeVM,
-} from '../../viewmodel/viewModel';
+} from '../../../viewmodel/viewModel';
 
 /**
  * 現在表示中のグラフを PlantUML テキストに変換し、Extension Host に送信する。
