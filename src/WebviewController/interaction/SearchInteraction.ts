@@ -4,8 +4,8 @@ import {
   getSearchState,
   setSearchState,
 } from '../serach/search';
-import { centerOnNode } from '../transformUI/viewport';
-import { renderViewport } from '../viewport/render';
+import { centerOnNode } from '../transformView/transformView';
+import { renderViewport } from '../renderViewport/render';
 import { getViewModel, type GraphViewModel } from '../viewmodel/viewModel';
 
 type SearchDirection = 1 | -1;

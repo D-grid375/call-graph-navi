@@ -5,7 +5,7 @@ import type { GraphViewModel, NodeVM } from '../viewmodel/viewModel';
 import {
   resetView,
   setLayoutPositions,
-} from '../transformUI/viewport';
+} from '../transformView/transformView';
 
 interface DagreGraph {
   setGraph(opts: Record<string, unknown>): void;

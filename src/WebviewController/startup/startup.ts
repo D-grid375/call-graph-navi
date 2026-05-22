@@ -27,7 +27,7 @@ import {
   exportPlantUml,
   hideAllNodes,
   showAllNodes,
-} from '../interaction/buttonInteraction/buttonActions';
+} from '../interaction/buttonInteraction/button';
 import { exportSvgToFile } from '../interaction/buttonInteraction/export/exportSvg';
 import { exportPngToFile } from '../interaction/buttonInteraction/export/exportPng';
 import {
@@ -36,39 +36,41 @@ import {
   hideExportMenu,
   toggleExportMenu,
 } from '../interaction/buttonInteraction/export/exportMenu';
-import { handleViewportClick } from '../interaction/nodeInteraction/nodeClick';
-import { handleViewportContextMenu } from '../interaction/nodeInteraction/nodeContextMenu';
+import {
+  handleFolderClick,
+  handleNodeRemoveClick,
+  handleViewportClick,
+} from '../interaction/graphInteraction/nodeClick';
+import { handleViewportContextMenu } from '../interaction/graphInteraction/nodeContextMenu';
 import {
   handleContextMenuIncomingClick,
   handleContextMenuOutgoingClick,
   handleContextMenuShowPathToRootClick,
   handleWindowClickForContextMenu,
   handleWindowKeyDownForContextMenu,
-} from '../interaction/nodeInteraction/nodeContextMenu';
-import { handleFolderClick } from '../interaction/nodeInteraction/nodeClick';
-import { handleNodeRemoveClick } from '../interaction/nodeInteraction/nodeRemove';
+} from '../interaction/graphInteraction/nodeContextMenu';
 import {
   handleInfoTreeFileClick,
   handleInfoTreeNodeClick,
   setupInfoTreeToggle,
-} from '../interaction/infoTree';
+} from '../interaction/infoInteraction';
 import {
   handleSearchInputKeyDown,
   handleSearchNextClick,
   handleSearchPrevClick,
-} from '../interaction/nodeSearchInteraction';
+} from '../interaction/SearchInteraction';
 import {
   handleSvgMouseDown,
   handleSvgWheel,
   handleViewportMouseDown,
   handleWindowMouseMove,
   handleWindowMouseUp,
-} from '../interaction/panZoom';
-import { renderViewport, setRenderPersistStateCallback } from '../viewport/render';
+} from '../interaction/viewCtrlInteraction';
+import { renderViewport, setRenderPersistStateCallback } from '../renderViewport/render';
 import {
   resetView,
   setTransformPersistStateCallback,
-} from '../transformUI/viewport';
+} from '../transformView/transformView';
 import {
   createGraphViewModel,
   setViewModel,

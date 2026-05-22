@@ -4,14 +4,14 @@ import {
   tooltip,
 } from '../../dom/dom';
 import type { GraphDirection } from '../../../shared/webviewMessages';
-import { renderViewport } from '../../viewport/render';
+import { renderViewport } from '../../renderViewport/render';
 import {
   collectReachableNodes,
   getViewModel,
   type GraphViewModel,
   type NodeVM,
 } from '../../viewmodel/viewModel';
-import { resolveNodeFromEventTarget } from './nodeInteraction';
+import { resolveNodeFromEventTarget } from './graphInteractionUtil';
 
 let contextMenuNode: NodeVM | null = null;
 

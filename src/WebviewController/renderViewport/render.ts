@@ -1,5 +1,5 @@
 import { infoSummaryText } from '../dom/dom';
-import { setLayoutPositions } from '../transformUI/viewport';
+import { setLayoutPositions } from '../transformView/transformView';
 import { getViewModel } from '../viewmodel/viewModel';
 import { clearInfoTree } from './renderInfoTree';
 import { clearViewport, renderGraph } from './renderGraph';

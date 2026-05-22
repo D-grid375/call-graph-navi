@@ -1,4 +1,4 @@
-import { renderViewport } from '../../viewport/render';
+import { renderViewport } from '../../renderViewport/render';
 import { getViewModel } from '../../viewmodel/viewModel';
 import { exportPlantUmlToClipboard } from './export/exportPlantUml';
 

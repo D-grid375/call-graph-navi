@@ -2,7 +2,7 @@ import { svg } from '../dom/dom';
 import {
   getTransform,
   setTransform,
-} from '../transformUI/viewport';
+} from '../transformView/transformView';
 
 let isPanning = false;
 let panStart = { x: 0, y: 0 };

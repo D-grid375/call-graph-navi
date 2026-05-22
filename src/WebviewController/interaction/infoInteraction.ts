@@ -1,8 +1,8 @@
 import { infoToggle } from '../dom/dom';
 import { getViewModel, unhideNode, unhideFile, hideUnreachableNodes, hideFile } from '../viewmodel/viewModel';
-import { nodeRemoveFromVM } from './nodeInteraction/nodeRemove';
-import { renderViewport } from '../viewport/render';
-import { applyExpandedState } from '../viewport/renderInfoTree';
+import { nodeRemoveFromVM } from './graphInteraction/nodeClick';
+import { renderViewport } from '../renderViewport/render';
+import { applyExpandedState } from '../renderViewport/renderInfoTree';
 
 let expanded = false;
 
