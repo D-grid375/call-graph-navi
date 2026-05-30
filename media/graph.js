@@ -56,7 +56,7 @@
     return PNG_EXPORT_SCALE_MAP[option] ?? PNG_EXPORT_SCALE_DEFAULT;
   }
 
-  // src/WebviewController/transformUI/viewport.ts
+  // src/WebviewController/transformView/transformView.ts
   var currentTransform = { x: 0, y: 0, scale: 1 };
   var persistStateCallback;
   var layoutPositions = /* @__PURE__ */ new Map();
@@ -132,6 +132,18 @@
         }
       }))
     };
+  }
+  function updateHighlightedNodes(vm, targetIds) {
+    const hitSet = new Set(targetIds);
+    let changed = false;
+    for (const node of vm.nodes) {
+      const highlighted = node.view.visibility === "visible" && hitSet.has(node.id);
+      if (node.view.highlighted !== highlighted) {
+        node.view.highlighted = highlighted;
+        changed = true;
+      }
+    }
+    return changed;
   }
   function unhideFile(vm, filePath) {
     const unhideNodeIds = getNodeIdsFromFilePath(vm, filePath);
@@ -271,7 +283,7 @@
     return true;
   }
 
-  // src/WebviewController/viewport/renderInfoTree.ts
+  // src/WebviewController/renderViewport/renderInfoTree.ts
   function clearInfoTree() {
     while (infoTree.firstChild) {
       infoTree.removeChild(infoTree.firstChild);
@@ -407,7 +419,7 @@
     return result;
   }
 
-  // src/WebviewController/viewport/renderGraph.ts
+  // src/WebviewController/renderViewport/renderGraph.ts
   var PADDING = 20;
   var NODE_HEIGHT = 28;
   var FILE_REMOVE_BUTTON_SIZE = 16;
@@ -709,7 +721,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/viewport/render.ts
+  // src/WebviewController/renderViewport/render.ts
   var persistStateCallback3;
   function setRenderPersistStateCallback(callback) {
     persistStateCallback3 = callback;
@@ -800,7 +812,7 @@ Click: open source`;
     return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   }
 
-  // src/WebviewController/interaction/buttonInteraction/buttonActions.ts
+  // src/WebviewController/interaction/buttonInteraction/button.ts
   function showAllNodes() {
     const vm = getViewModel();
     if (!vm) {
@@ -961,7 +973,7 @@ Click: open source`;
     }
   }
 
-  // src/WebviewController/interaction/nodeInteraction/nodeInteraction.ts
+  // src/WebviewController/interaction/graphInteraction/graphInteractionUtil.ts
   function resolveNodeFromEventTarget(target) {
     const element = target;
     if (element?.closest(".node-remove-button")) {
@@ -986,7 +998,7 @@ Click: open source`;
     return { vm, node };
   }
 
-  // src/WebviewController/interaction/nodeInteraction/nodeContextMenu.ts
+  // src/WebviewController/interaction/graphInteraction/nodeContextMenu.ts
   var contextMenuNode = null;
   function handleViewportContextMenu(event) {
     const resolved = resolveNodeFromEventTarget(event.target);
@@ -1116,7 +1128,7 @@ Click: open source`;
     return { sourceId: vm.rootNodeId, targetId: clickedNodeId };
   }
 
-  // src/WebviewController/interaction/nodeInteraction/nodeClick.ts
+  // src/WebviewController/interaction/graphInteraction/nodeClick.ts
   function handleViewportClick(event) {
     const resolved = resolveNodeFromEventTarget(event.target);
     if (!resolved) {
@@ -1156,8 +1168,6 @@ Click: open source`;
     hideUnreachableNodes(vm);
     renderViewport(false);
   }
-
-  // src/WebviewController/interaction/nodeInteraction/nodeRemove.ts
   function handleNodeRemoveClick(event) {
     const target = event.target;
     const button = target?.closest(".node-remove-button");
@@ -1185,7 +1195,7 @@ Click: open source`;
     renderViewport(false);
   }
 
-  // src/WebviewController/interaction/infoTree.ts
+  // src/WebviewController/interaction/infoInteraction.ts
   var expanded = false;
   function setupInfoTreeToggle() {
     applyExpandedState(expanded);
@@ -1250,6 +1260,10 @@ Click: open source`;
   }
 
   // src/WebviewController/serach/search.ts
+  var SearchDirection = {
+    Forward: 1,
+    Backward: -1
+  };
   var searchState = { query: "", hitIds: [], currentIndex: -1 };
   function getSearchState() {
     return searchState;
@@ -1260,63 +1274,16 @@ Click: open source`;
   function clearSearchState() {
     searchState = { query: "", hitIds: [], currentIndex: -1 };
   }
-
-  // src/WebviewController/interaction/nodeSearchInteraction.ts
-  function handleSearchInputKeyDown(event) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    const query = normalizeQuery(searchInput.value);
-    if (!query) {
-      clearSearchResults();
-      return;
-    }
-    const direction = event.shiftKey ? -1 : 1;
-    const previous = getSearchState();
-    if (query !== previous.query || previous.hitIds.length === 0) {
-      runSearch(query, 0);
-      return;
-    }
-    navigateSearch(direction);
-  }
-  function handleSearchPrevClick() {
-    handleSearchButtonClick(-1);
-  }
-  function handleSearchNextClick() {
-    handleSearchButtonClick(1);
-  }
-  function clearSearchResults() {
-    const vm = getViewModel();
-    const highlightChanged = vm ? updateHighlightedNodes(vm, []) : false;
-    clearSearchState();
-    updateIndicator(-1, 0);
-    updateCurrentMatchClass(void 0);
-    if (highlightChanged) {
-      renderViewport(false);
-    }
-  }
-  function handleSearchButtonClick(direction) {
-    const query = normalizeQuery(searchInput.value);
-    if (!query) {
-      clearSearchResults();
-      return;
-    }
-    const previous = getSearchState();
-    if (query !== previous.query || previous.hitIds.length === 0) {
-      runSearch(query, direction === 1 ? 0 : "last");
-      return;
-    }
-    navigateSearch(direction);
-  }
-  function runSearch(query, initialIndex) {
-    const refreshed = refreshSearchResults(query);
+  function runSearch(query, initialIndex, vm) {
+    const refreshed = refreshSearchResults(query, vm);
     if (refreshed.hitIds.length === 0) {
-      if (refreshed.shouldRender) {
-        renderViewport(false);
-      }
-      return;
+      return {
+        hitIds: [],
+        currentIndex: -1,
+        totalHits: 0,
+        currentNodeId: void 0,
+        hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+      };
     }
     const targetIndex = initialIndex === "last" ? refreshed.hitIds.length - 1 : 0;
     setSearchState({
@@ -1324,24 +1291,28 @@ Click: open source`;
       hitIds: refreshed.hitIds,
       currentIndex: targetIndex
     });
-    updateIndicator(targetIndex, refreshed.hitIds.length);
-    if (refreshed.shouldRender) {
-      renderViewport(false);
-    }
-    centerOnNode(refreshed.hitIds[targetIndex]);
-    updateCurrentMatchClass(refreshed.hitIds[targetIndex]);
+    return {
+      hitIds: refreshed.hitIds,
+      currentIndex: targetIndex,
+      totalHits: refreshed.hitIds.length,
+      currentNodeId: refreshed.hitIds[targetIndex],
+      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+    };
   }
-  function navigateSearch(direction) {
+  function updateHitState(direction, vm) {
     const previous = getSearchState();
     const currentNodeId = previous.currentIndex >= 0 ? previous.hitIds[previous.currentIndex] : void 0;
-    const refreshed = refreshSearchResults(previous.query, currentNodeId);
+    const refreshed = refreshSearchResults(previous.query, vm, currentNodeId);
     if (refreshed.hitIds.length === 0) {
-      if (refreshed.shouldRender) {
-        renderViewport(false);
-      }
-      return;
+      return {
+        hitIds: [],
+        currentIndex: -1,
+        totalHits: 0,
+        currentNodeId: void 0,
+        hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+      };
     }
-    const baseIndex = refreshed.currentIndex >= 0 ? refreshed.currentIndex : direction === 1 ? -1 : refreshed.hitIds.length;
+    const baseIndex = refreshed.currentIndex >= 0 ? refreshed.currentIndex : direction === SearchDirection.Forward ? -1 : refreshed.hitIds.length;
     const targetIndex = wrapIndex(
       baseIndex + direction,
       refreshed.hitIds.length
@@ -1351,22 +1322,20 @@ Click: open source`;
       hitIds: refreshed.hitIds,
       currentIndex: targetIndex
     });
-    updateIndicator(targetIndex, refreshed.hitIds.length);
-    if (refreshed.shouldRender) {
-      renderViewport(false);
-    }
-    centerOnNode(refreshed.hitIds[targetIndex]);
-    updateCurrentMatchClass(refreshed.hitIds[targetIndex]);
+    return {
+      hitIds: refreshed.hitIds,
+      currentIndex: targetIndex,
+      totalHits: refreshed.hitIds.length,
+      currentNodeId: refreshed.hitIds[targetIndex],
+      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+    };
   }
-  function refreshSearchResults(query, currentNodeId) {
-    const vm = getViewModel();
+  function refreshSearchResults(query, vm, currentNodeId) {
     if (!vm) {
       clearSearchState();
-      updateIndicator(-1, 0);
-      return { hitIds: [], currentIndex: -1, shouldRender: false };
+      return { hitIds: [], currentIndex: -1, hitsOrHighlightChanged: false };
     }
     const hitIds = collectHitIds(vm, query);
-    const highlightChanged = updateHighlightedNodes(vm, hitIds);
     const previous = getSearchState();
     const hitsChanged = previous.query !== query || !areStringArraysEqual(previous.hitIds, hitIds);
     const currentIndex = currentNodeId !== void 0 ? hitIds.indexOf(currentNodeId) : -1;
@@ -1375,11 +1344,10 @@ Click: open source`;
       hitIds,
       currentIndex
     });
-    updateIndicator(currentIndex, hitIds.length);
     return {
       hitIds,
       currentIndex,
-      shouldRender: highlightChanged || hitsChanged
+      hitsOrHighlightChanged: hitsChanged
     };
   }
   function collectHitIds(vm, query) {
@@ -1388,17 +1356,69 @@ Click: open source`;
       (node) => node.view.visibility === "visible" && node.name.toLowerCase().includes(normalizedQuery)
     ).map((node) => node.id);
   }
-  function updateHighlightedNodes(vm, hitIds) {
-    const hitSet = new Set(hitIds);
-    let changed = false;
-    for (const node of vm.nodes) {
-      const highlighted = node.view.visibility === "visible" && hitSet.has(node.id);
-      if (node.view.highlighted !== highlighted) {
-        node.view.highlighted = highlighted;
-        changed = true;
+  function areStringArraysEqual(a, b) {
+    if (a.length !== b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) {
+        return false;
       }
     }
-    return changed;
+    return true;
+  }
+  function wrapIndex(index, length) {
+    return (index % length + length) % length;
+  }
+
+  // src/WebviewController/interaction/SearchInteraction.ts
+  var EMPTY_SEARCH_RESULT = {
+    hitIds: [],
+    currentIndex: -1,
+    totalHits: 0,
+    currentNodeId: void 0,
+    hitsOrHighlightChanged: false
+  };
+  function handleSearchPrevClick() {
+    searchMain(SearchDirection.Backward);
+  }
+  function handleSearchNextClick() {
+    searchMain(SearchDirection.Forward);
+  }
+  function handleSearchInputKeyDown(event) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const direction = event.shiftKey ? SearchDirection.Backward : SearchDirection.Forward;
+    searchMain(direction);
+  }
+  function searchMain(direction) {
+    const query = normalizeQuery(searchInput.value);
+    if (!query) {
+      clearSearchState();
+      applySearchResultToView(EMPTY_SEARCH_RESULT);
+    } else {
+      const previous = getSearchState();
+      const vm = getViewModel();
+      if (!vm)
+        return;
+      const result = query !== previous.query || previous.hitIds.length === 0 ? runSearch(query, 0, vm) : updateHitState(direction, vm);
+      applySearchResultToView(result);
+    }
+  }
+  function applySearchResultToView(result) {
+    const vm = getViewModel();
+    const highlightChanged = vm ? updateHighlightedNodes(vm, result.hitIds) : false;
+    updateIndicator(result.currentIndex, result.totalHits);
+    updateCurrentMatchClass(result.currentNodeId);
+    if (result.hitsOrHighlightChanged || highlightChanged) {
+      renderViewport(false);
+    }
+    if (result.currentNodeId !== void 0) {
+      centerOnNode(result.currentNodeId);
+    }
   }
   function updateCurrentMatchClass(nodeId) {
     document.querySelectorAll(".func-node.search-current").forEach((el) => el.classList.remove("search-current"));
@@ -1420,22 +1440,8 @@ Click: open source`;
   function normalizeQuery(value) {
     return value.trim();
   }
-  function areStringArraysEqual(a, b) {
-    if (a.length !== b.length) {
-      return false;
-    }
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-  function wrapIndex(index, length) {
-    return (index % length + length) % length;
-  }
 
-  // src/WebviewController/interaction/panZoom.ts
+  // src/WebviewController/interaction/viewCtrlInteraction.ts
   var isPanning = false;
   var panStart = { x: 0, y: 0 };
   var panOriginal = { x: 0, y: 0 };
@@ -1481,7 +1487,7 @@ Click: open source`;
     });
   }
 
-  // src/WebviewController/startup/WebviewController.ts
+  // src/WebviewController/startup/startup.ts
   setViewModelPersistStateCallback(persistState);
   setTransformPersistStateCallback(persistState);
   setRenderPersistStateCallback(persistState);

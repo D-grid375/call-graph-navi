@@ -86,6 +86,33 @@ export function createGraphViewModel(data: CallGraphData): GraphViewModel {
 }
 
 /**
+ * ViewModel 上の `highlighted` フラグをヒット集合に合わせて更新する。
+ * 可視かつヒット対象のノードのみ `true` にする。
+ *
+ * @param vm 対象 ViewModel
+ * @param targetIds ハイライトすべきノード ID 列
+ * @returns いずれかのノードの `highlighted` が変化したら `true`
+ */
+export function updateHighlightedNodes(
+  vm: GraphViewModel,
+  targetIds: string[]
+): boolean {
+  const hitSet = new Set(targetIds);
+  let changed = false;
+
+  for (const node of vm.nodes) {
+    const highlighted =
+      node.view.visibility === 'visible' && hitSet.has(node.id);
+    if (node.view.highlighted !== highlighted) {
+      node.view.highlighted = highlighted;
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+/**
  * 指定ファイルに含まれるノードを再表示する。
  */
 export function unhideFile(vm: GraphViewModel, filePath: string): void {
