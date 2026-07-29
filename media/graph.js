@@ -313,7 +313,7 @@
       const fileEl = document.createElement("div");
       fileEl.className = "info-tree-file";
       fileEl.dataset.filePath = file.filePath;
-      const fileRow = document.createElement("label");
+      const fileRow = document.createElement("div");
       fileRow.className = "info-tree-row";
       const fileCheckbox = document.createElement("input");
       fileCheckbox.type = "checkbox";
@@ -331,7 +331,7 @@
       const nodes = file.nodeIds.map((id) => nodesById.get(id)).filter((n) => n !== void 0);
       const sortedNodes = sortNodes(nodes, vm.rootNodeId);
       for (const node of sortedNodes) {
-        const nodeRow = document.createElement("label");
+        const nodeRow = document.createElement("div");
         nodeRow.className = "info-tree-row";
         const nodeCheckbox = document.createElement("input");
         nodeCheckbox.type = "checkbox";
@@ -340,7 +340,8 @@
         nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
         nodeRow.appendChild(nodeCheckbox);
         const nodeLabel = document.createElement("span");
-        nodeLabel.className = "info-tree-label";
+        nodeLabel.className = "info-tree-label info-tree-label-node";
+        nodeLabel.dataset.nodeId = node.id;
         nodeLabel.textContent = node.name;
         nodeRow.appendChild(nodeLabel);
         nodeListEl.appendChild(nodeRow);
@@ -1197,12 +1198,9 @@ Click: open source`;
 
   // src/WebviewController/interaction/infoInteraction.ts
   var expanded = false;
-  function setupInfoTreeToggle() {
+  function handleInfoTreeToggle() {
+    expanded = !expanded;
     applyExpandedState(expanded);
-    infoToggle.addEventListener("click", () => {
-      expanded = !expanded;
-      applyExpandedState(expanded);
-    });
   }
   function handleInfoTreeFileClick(event) {
     const target = event.target;
@@ -1233,6 +1231,22 @@ Click: open source`;
       hideUnreachableNodes(vm);
       renderViewport(false);
     }
+  }
+  function handleInfoTreeNodeNameClick(event) {
+    const target = event.target;
+    const label = target?.closest(".info-tree-label-node");
+    if (!label) {
+      return;
+    }
+    const nodeId = label.dataset.nodeId;
+    if (!nodeId) {
+      return;
+    }
+    const checkbox = label.closest(".info-tree-row")?.querySelector(".info-tree-checkbox-node");
+    if (!checkbox?.checked) {
+      return;
+    }
+    centerOnNode(nodeId);
   }
   function handleInfoTreeNodeClick(event) {
     const target = event.target;
@@ -1491,7 +1505,6 @@ Click: open source`;
   setViewModelPersistStateCallback(persistState);
   setTransformPersistStateCallback(persistState);
   setRenderPersistStateCallback(persistState);
-  setupInfoTreeToggle();
   if (restoreState()) {
     renderViewport(false);
   }
@@ -1532,8 +1545,10 @@ Click: open source`;
   window.addEventListener("keydown", handleWindowKeyDownForContextMenu);
   viewport.addEventListener("click", handleFolderClick);
   viewport.addEventListener("click", handleNodeRemoveClick);
+  infoToggle.addEventListener("click", handleInfoTreeToggle);
   infoTree.addEventListener("click", handleInfoTreeFileClick);
   infoTree.addEventListener("click", handleInfoTreeNodeClick);
+  infoTree.addEventListener("click", handleInfoTreeNodeNameClick);
   viewport.addEventListener("mousedown", handleViewportMouseDown);
   svg.addEventListener("mousedown", handleSvgMouseDown);
   window.addEventListener("mousemove", handleWindowMouseMove);

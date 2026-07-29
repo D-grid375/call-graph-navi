@@ -1,17 +1,14 @@
-import { infoToggle } from '../dom/dom';
 import { getViewModel, unhideNode, unhideFile, hideUnreachableNodes, hideFile } from '../viewmodel/viewModel';
 import { nodeRemoveFromVM } from './graphInteraction/nodeClick';
 import { renderViewport } from '../renderViewport/render';
 import { applyExpandedState } from '../renderViewport/renderInfoTree';
+import { centerOnNode } from '../transformView/transformView';
 
 let expanded = false;
 
-export function setupInfoTreeToggle(): void {
+export function handleInfoTreeToggle(): void {
+  expanded = !expanded;
   applyExpandedState(expanded);
-  infoToggle.addEventListener('click', () => {
-    expanded = !expanded;
-    applyExpandedState(expanded);
-  });
 }
 
 export function handleInfoTreeFileClick(event: MouseEvent): void {
@@ -46,6 +43,28 @@ export function handleInfoTreeFileClick(event: MouseEvent): void {
     hideUnreachableNodes(vm);
     renderViewport(false);
   }
+}
+
+export function handleInfoTreeNodeNameClick(event: MouseEvent): void {
+  const target = event.target as Element | null;
+  const label = target?.closest('.info-tree-label-node') as HTMLElement | null;
+  if (!label) {
+    return;
+  }
+  const nodeId = label.dataset.nodeId;
+  if (!nodeId) {
+    return;
+  }
+
+  // 非表示ノードは中央寄せできないため、チェック状態で可視判定する
+  const checkbox = label
+    .closest('.info-tree-row')
+    ?.querySelector<HTMLInputElement>('.info-tree-checkbox-node');
+  if (!checkbox?.checked) {
+    return;
+  }
+
+  centerOnNode(nodeId);
 }
 
 export function handleInfoTreeNodeClick(event: MouseEvent): void {

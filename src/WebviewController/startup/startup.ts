@@ -16,6 +16,7 @@ import {
   contextMenuIncoming,
   contextMenuOutgoing,
   contextMenuShowPathToRoot,
+  infoToggle,
   infoTree,
   searchInput,
   svg,
@@ -52,7 +53,8 @@ import {
 import {
   handleInfoTreeFileClick,
   handleInfoTreeNodeClick,
-  setupInfoTreeToggle,
+  handleInfoTreeNodeNameClick,
+  handleInfoTreeToggle,
 } from '../interaction/infoInteraction';
 import {
   handleSearchInputKeyDown,
@@ -81,9 +83,6 @@ import {
 setViewModelPersistStateCallback(persistState);
 setTransformPersistStateCallback(persistState);
 setRenderPersistStateCallback(persistState);
-
-// info パネルのアコーディオントグル初期化
-setupInfoTreeToggle();
 
 // ウィンドウ切り出し等で Webview が再生成された場合、前回の状態を復元する
 if (restoreState()) {
@@ -134,8 +133,10 @@ viewport.addEventListener('click', handleFolderClick);
 viewport.addEventListener('click', handleNodeRemoveClick);
 
 // info ツリーのファイル／ノードクリックイベント
+infoToggle.addEventListener('click', handleInfoTreeToggle);
 infoTree.addEventListener('click', handleInfoTreeFileClick);
 infoTree.addEventListener('click', handleInfoTreeNodeClick);
+infoTree.addEventListener('click', handleInfoTreeNodeNameClick);
 
 // パン・ズームイベント
 viewport.addEventListener('mousedown', handleViewportMouseDown);

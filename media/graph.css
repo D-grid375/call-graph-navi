@@ -103,7 +103,6 @@ body {
   align-items: center;
   gap: 6px;
   padding: 2px 0;
-  cursor: pointer;
 }
 
 .info-tree-file>.info-tree-row {
@@ -114,6 +113,10 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.info-tree-label-node {
+  cursor: pointer;
 }
 
 .info-tree-node-list {

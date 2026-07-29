@@ -38,7 +38,7 @@ export function renderInfoTree(vm: GraphViewModel): void {
     fileEl.className = 'info-tree-file';
     fileEl.dataset.filePath = file.filePath;
 
-    const fileRow = document.createElement('label');
+    const fileRow = document.createElement('div');
     fileRow.className = 'info-tree-row';
 
     const fileCheckbox = document.createElement('input');
@@ -64,7 +64,7 @@ export function renderInfoTree(vm: GraphViewModel): void {
     const sortedNodes = sortNodes(nodes, vm.rootNodeId);
 
     for (const node of sortedNodes) {
-      const nodeRow = document.createElement('label');
+      const nodeRow = document.createElement('div');
       nodeRow.className = 'info-tree-row';
 
       const nodeCheckbox = document.createElement('input');
@@ -75,7 +75,8 @@ export function renderInfoTree(vm: GraphViewModel): void {
       nodeRow.appendChild(nodeCheckbox);
 
       const nodeLabel = document.createElement('span');
-      nodeLabel.className = 'info-tree-label';
+      nodeLabel.className = 'info-tree-label info-tree-label-node';
+      nodeLabel.dataset.nodeId = node.id;
       nodeLabel.textContent = node.name;
       nodeRow.appendChild(nodeLabel);
 
