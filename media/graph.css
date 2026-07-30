@@ -119,6 +119,12 @@ body {
   cursor: pointer;
 }
 
+/* 非表示中の行は目玉マークとラベルを暗く表示する */
+.info-tree-checkbox:not(:checked),
+.info-tree-checkbox:not(:checked)+.info-tree-label {
+  opacity: 0.6;
+}
+
 .info-tree-node-list {
   padding-left: 18px;
 }
