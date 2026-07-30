@@ -128,28 +128,21 @@ body {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   margin: 0;
   padding: 0;
   cursor: pointer;
   box-sizing: border-box;
-  background: transparent;
-  color: #afafaf;
-  border: 1px solid #afafaf;
+  border: none;
+  /* 非表示状態：斜線付きの目 */
+  background: transparent no-repeat center / 16px 16px;
+  background-image: url("svgs/eye-off.svg");
 }
 
-.info-tree-checkbox:checked::after {
-  content: "";
-  position: absolute;
-  left: 3px;
-  top: 0px;
-  width: 4px;
-  height: 8px;
-  border: solid currentColor;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  color: #afafaf;
+/* 表示状態：開いた目 */
+.info-tree-checkbox:checked {
+  background-image: url("svgs/eye.svg");
 }
 
 #search-box {
