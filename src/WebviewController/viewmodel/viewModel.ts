@@ -130,10 +130,28 @@ export function unhideFile(vm: GraphViewModel, filePath: string): void {
  * 指定ノードを再表示し、表示中グラフとの接続に必要な隣接ノードも再表示する。
  */
 export function unhideNode(vm: GraphViewModel, nodeId: string): void {
-  // ノード表示
+  // 対称のノードを再表示
   for (const node of vm.nodes) {
     if (nodeId === node.id) {
       node.view.visibility = 'visible';
+    }
+  }
+
+  // ノードからルートと逆方向に延びるエッジを抽出
+  const incomingEdges =
+    vm.direction === 'incoming'
+      ? vm.edges.filter((edge) => edge.to === nodeId)
+      : vm.edges.filter((edge) => edge.from === nodeId);
+  
+  // 抽出した各エッジの隣接ノードが表示中であるかチェックし、表示中ならそのエッジを再表示する
+  for (const edge of incomingEdges) {
+    const targetNode =
+      vm.direction === 'incoming'
+        ? vm.nodes.find((node) => node.id === edge.from)
+        : vm.nodes.find((node) => node.id === edge.to);
+
+    if (targetNode && targetNode.view.visibility === 'visible') {
+      edge.view.visibility = 'visible';
     }
   }
 
@@ -143,7 +161,7 @@ export function unhideNode(vm: GraphViewModel, nodeId: string): void {
       ? vm.edges.filter((edge) => edge.from === nodeId)
       : vm.edges.filter((edge) => edge.to === nodeId);
 
-  // エッジから隣接ノードを取得し再帰的に表示有効化
+  // 抽出した各エッジから隣接ノードを取得し再帰的に表示有効化（表示中ノードは処理しない）
   for (const edge of matchingEdges) {
     edge.view.visibility = 'visible'; // エッジは必ず非表示中なので無条件で再表示
 

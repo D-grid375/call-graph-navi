@@ -160,6 +160,13 @@
         node.view.visibility = "visible";
       }
     }
+    const incomingEdges = vm.direction === "incoming" ? vm.edges.filter((edge) => edge.to === nodeId) : vm.edges.filter((edge) => edge.from === nodeId);
+    for (const edge of incomingEdges) {
+      const targetNode = vm.direction === "incoming" ? vm.nodes.find((node) => node.id === edge.from) : vm.nodes.find((node) => node.id === edge.to);
+      if (targetNode && targetNode.view.visibility === "visible") {
+        edge.view.visibility = "visible";
+      }
+    }
     const matchingEdges = vm.direction === "incoming" ? vm.edges.filter((edge) => edge.from === nodeId) : vm.edges.filter((edge) => edge.to === nodeId);
     for (const edge of matchingEdges) {
       edge.view.visibility = "visible";
