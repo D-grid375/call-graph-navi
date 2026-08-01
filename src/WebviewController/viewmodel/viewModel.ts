@@ -142,7 +142,7 @@ export function unhideNode(vm: GraphViewModel, nodeId: string): void {
     vm.direction === 'incoming'
       ? vm.edges.filter((edge) => edge.to === nodeId)
       : vm.edges.filter((edge) => edge.from === nodeId);
-  
+
   // 抽出した各エッジの隣接ノードが表示中であるかチェックし、表示中ならそのエッジを再表示する
   for (const edge of incomingEdges) {
     const targetNode =

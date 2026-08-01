@@ -41,12 +41,17 @@ export function renderInfoTree(vm: GraphViewModel): void {
     const fileRow = document.createElement('div');
     fileRow.className = 'info-tree-row';
 
-    const fileCheckbox = document.createElement('input');
-    fileCheckbox.type = 'checkbox';
-    fileCheckbox.className = 'info-tree-checkbox info-tree-checkbox-file';
-    fileCheckbox.dataset.filePath = file.filePath;
-    fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? false;
-    fileRow.appendChild(fileCheckbox);
+    // ルートノードを含むファイルは非表示にできないため、目玉マークを付けない
+    if (file.nodeIds.includes(vm.rootNodeId)) {
+      fileRow.appendChild(createCheckboxSpacer());
+    } else {
+      const fileCheckbox = document.createElement('input');
+      fileCheckbox.type = 'checkbox';
+      fileCheckbox.className = 'info-tree-checkbox info-tree-checkbox-file';
+      fileCheckbox.dataset.filePath = file.filePath;
+      fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? false;
+      fileRow.appendChild(fileCheckbox);
+    }
 
     const fileLabel = document.createElement('span');
     fileLabel.className = 'info-tree-label';
@@ -67,12 +72,17 @@ export function renderInfoTree(vm: GraphViewModel): void {
       const nodeRow = document.createElement('div');
       nodeRow.className = 'info-tree-row';
 
-      const nodeCheckbox = document.createElement('input');
-      nodeCheckbox.type = 'checkbox';
-      nodeCheckbox.className = 'info-tree-checkbox info-tree-checkbox-node';
-      nodeCheckbox.dataset.nodeId = node.id;
-      nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
-      nodeRow.appendChild(nodeCheckbox);
+      // ルートノードは非表示にできないため、目玉マークを付けない
+      if (node.id === vm.rootNodeId) {
+        nodeRow.appendChild(createCheckboxSpacer());
+      } else {
+        const nodeCheckbox = document.createElement('input');
+        nodeCheckbox.type = 'checkbox';
+        nodeCheckbox.className = 'info-tree-checkbox info-tree-checkbox-node';
+        nodeCheckbox.dataset.nodeId = node.id;
+        nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
+        nodeRow.appendChild(nodeCheckbox);
+      }
 
       const nodeLabel = document.createElement('span');
       nodeLabel.className = 'info-tree-label info-tree-label-node';
@@ -88,6 +98,16 @@ export function renderInfoTree(vm: GraphViewModel): void {
   }
 
   applyVisibleChecks(vm);
+}
+
+/**
+ * 目玉マークを持たない行のための、チェックボックスと同幅の空要素を作る。
+ * ラベルの開始位置を他の行と揃えるために使う。
+ */
+function createCheckboxSpacer(): HTMLElement {
+  const spacer = document.createElement('span');
+  spacer.className = 'info-tree-checkbox-spacer';
+  return spacer;
 }
 
 function applyVisibleChecks(vm: GraphViewModel): void {

@@ -322,12 +322,16 @@
       fileEl.dataset.filePath = file.filePath;
       const fileRow = document.createElement("div");
       fileRow.className = "info-tree-row";
-      const fileCheckbox = document.createElement("input");
-      fileCheckbox.type = "checkbox";
-      fileCheckbox.className = "info-tree-checkbox info-tree-checkbox-file";
-      fileCheckbox.dataset.filePath = file.filePath;
-      fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? false;
-      fileRow.appendChild(fileCheckbox);
+      if (file.nodeIds.includes(vm.rootNodeId)) {
+        fileRow.appendChild(createCheckboxSpacer());
+      } else {
+        const fileCheckbox = document.createElement("input");
+        fileCheckbox.type = "checkbox";
+        fileCheckbox.className = "info-tree-checkbox info-tree-checkbox-file";
+        fileCheckbox.dataset.filePath = file.filePath;
+        fileCheckbox.checked = previousFileChecks.get(file.filePath) ?? false;
+        fileRow.appendChild(fileCheckbox);
+      }
       const fileLabel = document.createElement("span");
       fileLabel.className = "info-tree-label";
       fileLabel.textContent = file.displayName;
@@ -340,12 +344,16 @@
       for (const node of sortedNodes) {
         const nodeRow = document.createElement("div");
         nodeRow.className = "info-tree-row";
-        const nodeCheckbox = document.createElement("input");
-        nodeCheckbox.type = "checkbox";
-        nodeCheckbox.className = "info-tree-checkbox info-tree-checkbox-node";
-        nodeCheckbox.dataset.nodeId = node.id;
-        nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
-        nodeRow.appendChild(nodeCheckbox);
+        if (node.id === vm.rootNodeId) {
+          nodeRow.appendChild(createCheckboxSpacer());
+        } else {
+          const nodeCheckbox = document.createElement("input");
+          nodeCheckbox.type = "checkbox";
+          nodeCheckbox.className = "info-tree-checkbox info-tree-checkbox-node";
+          nodeCheckbox.dataset.nodeId = node.id;
+          nodeCheckbox.checked = previousNodeChecks.get(node.id) ?? false;
+          nodeRow.appendChild(nodeCheckbox);
+        }
         const nodeLabel = document.createElement("span");
         nodeLabel.className = "info-tree-label info-tree-label-node";
         nodeLabel.dataset.nodeId = node.id;
@@ -357,6 +365,11 @@
       infoTree.appendChild(fileEl);
     }
     applyVisibleChecks(vm);
+  }
+  function createCheckboxSpacer() {
+    const spacer = document.createElement("span");
+    spacer.className = "info-tree-checkbox-spacer";
+    return spacer;
   }
   function applyVisibleChecks(vm) {
     const visibleNodes = vm.nodes.filter(
@@ -1250,7 +1263,7 @@ Click: open source`;
       return;
     }
     const checkbox = label.closest(".info-tree-row")?.querySelector(".info-tree-checkbox-node");
-    if (!checkbox?.checked) {
+    if (checkbox && !checkbox.checked) {
       return;
     }
     centerOnNode(nodeId);

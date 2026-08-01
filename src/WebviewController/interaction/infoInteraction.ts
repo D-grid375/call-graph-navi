@@ -56,11 +56,12 @@ export function handleInfoTreeNodeNameClick(event: MouseEvent): void {
     return;
   }
 
-  // 非表示ノードは中央寄せできないため、チェック状態で可視判定する
+  // 非表示ノードは中央寄せできないため、チェック状態で可視判定する。
+  // ルートノードは非表示にできず目玉マークを持たないため、常に可視として扱う。
   const checkbox = label
     .closest('.info-tree-row')
     ?.querySelector<HTMLInputElement>('.info-tree-checkbox-node');
-  if (!checkbox?.checked) {
+  if (checkbox && !checkbox.checked) {
     return;
   }
 

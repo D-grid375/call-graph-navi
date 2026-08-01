@@ -151,6 +151,13 @@ body {
   background-image: url("svgs/eye.svg");
 }
 
+/* 目玉マークを持たない行（ルートノード・ルートを含むファイル）の位置合わせ用 */
+.info-tree-checkbox-spacer {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+
 #search-box {
   display: flex;
   align-items: center;
