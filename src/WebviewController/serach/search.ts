@@ -21,7 +21,7 @@ export interface SearchResult {
   currentIndex: number;
   totalHits: number;
   currentNodeId: string | undefined;
-  hitsOrHighlightChanged: boolean;
+  hitsChanged: boolean;
 }
 
 let searchState: SearchState = { query: '', hitIds: [], currentIndex: -1 };
@@ -56,7 +56,7 @@ export function runSearch(
       currentIndex: -1,
       totalHits: 0,
       currentNodeId: undefined,
-      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged,
+      hitsChanged: refreshed.hitsChanged,
     };
   }
 
@@ -73,7 +73,7 @@ export function runSearch(
     currentIndex: targetIndex,
     totalHits: refreshed.hitIds.length,
     currentNodeId: refreshed.hitIds[targetIndex],
-    hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged,
+    hitsChanged: refreshed.hitsChanged,
   };
 }
 
@@ -98,7 +98,7 @@ export function updateHitState(direction: SearchDirection, vm: GraphViewModel): 
       currentIndex: -1,
       totalHits: 0,
       currentNodeId: undefined,
-      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged,
+      hitsChanged: refreshed.hitsChanged,
     };
   }
 
@@ -124,7 +124,7 @@ export function updateHitState(direction: SearchDirection, vm: GraphViewModel): 
     currentIndex: targetIndex,
     totalHits: refreshed.hitIds.length,
     currentNodeId: refreshed.hitIds[targetIndex],
-    hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged,
+    hitsChanged: refreshed.hitsChanged,
   };
 }
 
@@ -143,11 +143,11 @@ function refreshSearchResults(
 ): {
   hitIds: string[];
   currentIndex: number;
-  hitsOrHighlightChanged: boolean;
+  hitsChanged: boolean;
 } {
   if (!vm) {
     clearSearchState();
-    return { hitIds: [], currentIndex: -1, hitsOrHighlightChanged: false };
+    return { hitIds: [], currentIndex: -1, hitsChanged: false };
   }
 
   const hitIds = collectHitIds(vm, query);
@@ -166,7 +166,7 @@ function refreshSearchResults(
   return {
     hitIds,
     currentIndex,
-    hitsOrHighlightChanged: hitsChanged,
+    hitsChanged,
   };
 }
 

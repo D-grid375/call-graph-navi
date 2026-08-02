@@ -377,6 +377,10 @@
     }
     applyVisibleChecks(vm);
   }
+  function scrollToSearchSelectNode() {
+    const label = infoTree.querySelector(".info-tree-label-node.search-select");
+    label?.scrollIntoView({ block: "nearest" });
+  }
   function buildNodeLabelClassName(node) {
     const classNames = ["info-tree-label", "info-tree-label-node"];
     if (node.view.searchSelect) {
@@ -1337,7 +1341,7 @@ Click: open source`;
         currentIndex: -1,
         totalHits: 0,
         currentNodeId: void 0,
-        hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+        hitsChanged: refreshed.hitsChanged
       };
     }
     const targetIndex = initialIndex === "last" ? refreshed.hitIds.length - 1 : 0;
@@ -1351,7 +1355,7 @@ Click: open source`;
       currentIndex: targetIndex,
       totalHits: refreshed.hitIds.length,
       currentNodeId: refreshed.hitIds[targetIndex],
-      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+      hitsChanged: refreshed.hitsChanged
     };
   }
   function updateHitState(direction, vm) {
@@ -1364,7 +1368,7 @@ Click: open source`;
         currentIndex: -1,
         totalHits: 0,
         currentNodeId: void 0,
-        hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+        hitsChanged: refreshed.hitsChanged
       };
     }
     const baseIndex = refreshed.currentIndex >= 0 ? refreshed.currentIndex : direction === SearchDirection.Forward ? -1 : refreshed.hitIds.length;
@@ -1382,13 +1386,13 @@ Click: open source`;
       currentIndex: targetIndex,
       totalHits: refreshed.hitIds.length,
       currentNodeId: refreshed.hitIds[targetIndex],
-      hitsOrHighlightChanged: refreshed.hitsOrHighlightChanged
+      hitsChanged: refreshed.hitsChanged
     };
   }
   function refreshSearchResults(query, vm, currentNodeId) {
     if (!vm) {
       clearSearchState();
-      return { hitIds: [], currentIndex: -1, hitsOrHighlightChanged: false };
+      return { hitIds: [], currentIndex: -1, hitsChanged: false };
     }
     const hitIds = collectHitIds(vm, query);
     const previous = getSearchState();
@@ -1402,7 +1406,7 @@ Click: open source`;
     return {
       hitIds,
       currentIndex,
-      hitsOrHighlightChanged: hitsChanged
+      hitsChanged
     };
   }
   function collectHitIds(vm, query) {
@@ -1432,7 +1436,7 @@ Click: open source`;
     currentIndex: -1,
     totalHits: 0,
     currentNodeId: void 0,
-    hitsOrHighlightChanged: false
+    hitsChanged: false
   };
   function handleSearchPrevClick() {
     searchMain(SearchDirection.Backward);
@@ -1471,11 +1475,12 @@ Click: open source`;
     const searchHitChanged = updateSearchHitNodes(vm, result.hitIds);
     const searchSelectChanged = updateSearchSelectNode(vm, result.currentNodeId);
     updateIndicator(result.currentIndex, result.totalHits);
-    if (result.hitsOrHighlightChanged || searchHitChanged || searchSelectChanged) {
+    if (result.hitsChanged || searchHitChanged || searchSelectChanged) {
       renderViewport(false);
     }
     if (result.currentNodeId !== void 0) {
       centerOnNode(result.currentNodeId);
+      scrollToSearchSelectNode();
     }
   }
   function updateIndicator(currentIndex, totalHits) {

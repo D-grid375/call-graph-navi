@@ -101,6 +101,16 @@ export function renderInfoTree(vm: GraphViewModel): void {
 }
 
 /**
+ * 検索でジャンプ中のノード名が見えるところまで info ツリーをスクロールする。
+ * 既に見えている場合は動かさない（`block: 'nearest'` の挙動）。
+ * ツリーが折りたたまれている場合は `display: none` のため何も起きない。
+ */
+export function scrollToSearchSelectNode(): void {
+  const label = infoTree.querySelector('.info-tree-label-node.search-select');
+  label?.scrollIntoView({ block: 'nearest' });
+}
+
+/**
  * ノード名ラベルのクラス名を組み立てる。
  * 検索状態を示すクラスはグラフ側（`buildNodeClassName`）と同じ名前を使う。
  */

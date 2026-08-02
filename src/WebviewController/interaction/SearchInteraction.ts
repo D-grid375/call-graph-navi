@@ -9,6 +9,7 @@ import {
 } from '../serach/search';
 import { centerOnNode } from '../transformView/transformView';
 import { renderViewport } from '../renderViewport/render';
+import { scrollToSearchSelectNode } from '../renderViewport/renderInfoTree';
 import {
   getViewModel,
   updateSearchHitNodes,
@@ -29,7 +30,7 @@ const EMPTY_SEARCH_RESULT: SearchResult = {
   currentIndex: -1,
   totalHits: 0,
   currentNodeId: undefined,
-  hitsOrHighlightChanged: false,
+  hitsChanged: false,
 };
 
 /**
@@ -97,7 +98,7 @@ function searchMain(direction: SearchDirection) {
 /**
  * 検索結果に応じて UI を更新する。
  * ヒット・ジャンプ中ノードを ViewModel に反映し、
- * インジケータ更新・必要なら再描画・中央寄せを行う。
+ * インジケータ更新・必要なら再描画・中央寄せ・info ツリーのスクロールを行う。
  */
 function applySearchResultToView(result: SearchResult): void {
   const vm = getViewModel();
@@ -109,11 +110,12 @@ function applySearchResultToView(result: SearchResult): void {
   const searchSelectChanged = updateSearchSelectNode(vm, result.currentNodeId);
   updateIndicator(result.currentIndex, result.totalHits);
 
-  if (result.hitsOrHighlightChanged || searchHitChanged || searchSelectChanged) {
-    renderViewport(false);
+  if (result.hitsChanged || searchHitChanged || searchSelectChanged) { // TODO：result.hitsChanged と searchHitChanged の意味と違いが不明
+    renderViewport(false); // グラフとInfoTreeを更新
   }
   if (result.currentNodeId !== undefined) {
-    centerOnNode(result.currentNodeId);
+    centerOnNode(result.currentNodeId); // 検索選択中のノードをグラフ上で中央寄せ
+    scrollToSearchSelectNode();         // 検索選択中のノードがInfoTree上で表示されるようスクロール
   }
 }
 
