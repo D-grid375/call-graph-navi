@@ -58,11 +58,11 @@ function buildNodeClassName(node: NodeVM): string {
   if (node.isRoot) {
     classNames.push('root');
   }
-  if (node.view.selected) {
-    classNames.push('selected');
+  if (node.view.searchSelect) {
+    classNames.push('search-select');
   }
   if (node.view.searchHit) {
-    classNames.push('matched');
+    classNames.push('search-hit');
   }
   return classNames.join(' ');
 }

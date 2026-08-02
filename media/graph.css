@@ -440,19 +440,14 @@ body {
   stroke-width: 2.5;
 }
 
-.func-node.matched>rect {
+.func-node.search-hit>rect {
   stroke: #f19f23;
   stroke-width: 2;
 }
 
-.func-node.search-current>rect {
+.func-node.search-select>rect {
   stroke: #f19f23;
   stroke-width: 4;
-}
-
-.func-node.selected>rect {
-  stroke: var(--vscode-textLink-foreground, #3794ff);
-  stroke-width: 3;
 }
 
 .func-node text {

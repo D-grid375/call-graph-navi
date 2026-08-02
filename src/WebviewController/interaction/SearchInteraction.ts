@@ -9,7 +9,11 @@ import {
 } from '../serach/search';
 import { centerOnNode } from '../transformView/transformView';
 import { renderViewport } from '../renderViewport/render';
-import { getViewModel, updateSearchHitNodes } from '../viewmodel/viewModel';
+import {
+  getViewModel,
+  updateSearchHitNodes,
+  updateSearchSelectNode,
+} from '../viewmodel/viewModel';
 
 /**
  * 検索結果を完全にクリアする内部ヘルパー。
@@ -92,43 +96,25 @@ function searchMain(direction: SearchDirection) {
 
 /**
  * 検索結果に応じて UI を更新する。
- * ハイライト反映・インジケータ更新・必要なら再描画・中央寄せ・current クラス付与を行う。
+ * ヒット・ジャンプ中ノードを ViewModel に反映し、
+ * インジケータ更新・必要なら再描画・中央寄せを行う。
  */
 function applySearchResultToView(result: SearchResult): void {
   const vm = getViewModel();
-  const searchHitChanged = vm
-    ? updateSearchHitNodes(vm, result.hitIds)
-    : false;
-  updateIndicator(result.currentIndex, result.totalHits);
-  updateCurrentMatchClass(result.currentNodeId);
+  if (!vm) {
+    return;
+  }
 
-  if (result.hitsOrHighlightChanged || searchHitChanged) {
+  const searchHitChanged = updateSearchHitNodes(vm, result.hitIds);
+  const searchSelectChanged = updateSearchSelectNode(vm, result.currentNodeId);
+  updateIndicator(result.currentIndex, result.totalHits);
+
+  if (result.hitsOrHighlightChanged || searchHitChanged || searchSelectChanged) {
     renderViewport(false);
   }
   if (result.currentNodeId !== undefined) {
     centerOnNode(result.currentNodeId);
   }
-}
-
-/**
- * DOM 上の `search-current` クラスを張り替える。
- * 既存の付与先から一旦剥がし、指定ノードがあればその要素に付け直す。
- *
- * @param nodeId 現在一致ノードの ID。`undefined` なら付与しない
- */
-function updateCurrentMatchClass(nodeId: string | undefined): void {
-  document
-    .querySelectorAll('.func-node.search-current')
-    .forEach((el) => el.classList.remove('search-current'));
-
-  if (nodeId === undefined) {
-    return;
-  }
-
-  const target = document.querySelector(
-    `.func-node[data-node-id="${CSS.escape(nodeId)}"]`
-  );
-  target?.classList.add('search-current');
 }
 
 /**

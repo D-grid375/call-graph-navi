@@ -119,7 +119,7 @@
         ...node,
         view: {
           visibility: "visible",
-          selected: false,
+          searchSelect: false,
           searchHit: false
         }
       })),
@@ -140,6 +140,17 @@
       const searchHit = node.view.visibility === "visible" && hitSet.has(node.id);
       if (node.view.searchHit !== searchHit) {
         node.view.searchHit = searchHit;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+  function updateSearchSelectNode(vm, targetNodeId) {
+    let changed = false;
+    for (const node of vm.nodes) {
+      const searchSelect = node.view.visibility === "visible" && node.id === targetNodeId;
+      if (node.view.searchSelect !== searchSelect) {
+        node.view.searchSelect = searchSelect;
         changed = true;
       }
     }
@@ -187,7 +198,7 @@
     for (const node of vm.nodes) {
       if (nodeIds.has(node.id)) {
         node.view.visibility = "hidden";
-        node.view.selected = false;
+        node.view.searchSelect = false;
       }
     }
     for (const edge of vm.edges) {
@@ -205,7 +216,7 @@
     for (const node of vm.nodes) {
       if (!reachableNodeIds.has(node.id)) {
         node.view.visibility = "hidden";
-        node.view.selected = false;
+        node.view.searchSelect = false;
       }
     }
     for (const edge of vm.edges) {
@@ -464,11 +475,11 @@
     if (node.isRoot) {
       classNames.push("root");
     }
-    if (node.view.selected) {
-      classNames.push("selected");
+    if (node.view.searchSelect) {
+      classNames.push("search-select");
     }
     if (node.view.searchHit) {
-      classNames.push("matched");
+      classNames.push("search-hit");
     }
     return classNames.join(" ");
   }
@@ -1444,25 +1455,18 @@ Click: open source`;
   }
   function applySearchResultToView(result) {
     const vm = getViewModel();
-    const searchHitChanged = vm ? updateSearchHitNodes(vm, result.hitIds) : false;
+    if (!vm) {
+      return;
+    }
+    const searchHitChanged = updateSearchHitNodes(vm, result.hitIds);
+    const searchSelectChanged = updateSearchSelectNode(vm, result.currentNodeId);
     updateIndicator(result.currentIndex, result.totalHits);
-    updateCurrentMatchClass(result.currentNodeId);
-    if (result.hitsOrHighlightChanged || searchHitChanged) {
+    if (result.hitsOrHighlightChanged || searchHitChanged || searchSelectChanged) {
       renderViewport(false);
     }
     if (result.currentNodeId !== void 0) {
       centerOnNode(result.currentNodeId);
     }
-  }
-  function updateCurrentMatchClass(nodeId) {
-    document.querySelectorAll(".func-node.search-current").forEach((el) => el.classList.remove("search-current"));
-    if (nodeId === void 0) {
-      return;
-    }
-    const target = document.querySelector(
-      `.func-node[data-node-id="${CSS.escape(nodeId)}"]`
-    );
-    target?.classList.add("search-current");
   }
   function updateIndicator(currentIndex, totalHits) {
     if (currentIndex < 0 || totalHits === 0) {

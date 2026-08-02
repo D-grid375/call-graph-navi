@@ -2,7 +2,8 @@ import type { CallGraphData, FileGroup, GraphNode } from '../../shared/types';
 
 export interface NodeViewState {
   visibility: 'visible' | 'hidden';
-  selected: boolean;
+  /** 検索でジャンプ中（現在選択中）のヒットノードかどうか */
+  searchSelect: boolean;
   searchHit: boolean;
 }
 
@@ -70,7 +71,7 @@ export function createGraphViewModel(data: CallGraphData): GraphViewModel {
       ...node,
       view: {
         visibility: 'visible',
-        selected: false,
+        searchSelect: false,
         searchHit: false,
       },
     })),
@@ -105,6 +106,32 @@ export function updateSearchHitNodes(
       node.view.visibility === 'visible' && hitSet.has(node.id);
     if (node.view.searchHit !== searchHit) {
       node.view.searchHit = searchHit;
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+/**
+ * ViewModel 上の `searchSelect` フラグを、ジャンプ中のノード 1 件だけ `true` に更新する。
+ * 可視ノードのみ対象とし、それ以外は全て `false` に落とす。
+ *
+ * @param vm 対象 ViewModel
+ * @param targetNodeId ジャンプ中のノード ID。`undefined` ならどのノードも選択しない
+ * @returns いずれかのノードの `searchSelect` が変化したら `true`
+ */
+export function updateSearchSelectNode(
+  vm: GraphViewModel,
+  targetNodeId: string | undefined
+): boolean {
+  let changed = false;
+
+  for (const node of vm.nodes) {
+    const searchSelect =
+      node.view.visibility === 'visible' && node.id === targetNodeId; // 設定するsearchSelect値
+    if (node.view.searchSelect !== searchSelect) { // 現状のsearchSelect値と不一致なら上書きし、変更フラグを立てる
+      node.view.searchSelect = searchSelect;
       changed = true;
     }
   }
@@ -196,7 +223,7 @@ export function hideNodes(vm: GraphViewModel, nodeIds: Set<string>): void {
   for (const node of vm.nodes) {
     if (nodeIds.has(node.id)) {
       node.view.visibility = 'hidden';
-      node.view.selected = false;
+      node.view.searchSelect = false;
     }
   }
 
@@ -223,7 +250,7 @@ export function hideUnreachableNodes(vm: GraphViewModel): void {
   for (const node of vm.nodes) {
     if (!reachableNodeIds.has(node.id)) {
       node.view.visibility = 'hidden';
-      node.view.selected = false;
+      node.view.searchSelect = false;
     }
   }
 
