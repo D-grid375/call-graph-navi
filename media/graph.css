@@ -116,6 +116,14 @@ body {
 }
 
 .info-tree-label-node {
+  /* ホバー時の背景がテキストに密着しないよう余白を持たせる */
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+
+/* 中央寄せできる（＝表示中の）ノード名のみクリック可能に見せる */
+.info-tree-checkbox:checked+.info-tree-label-node,
+.info-tree-checkbox-spacer+.info-tree-label-node {
   cursor: pointer;
 }
 
@@ -156,6 +164,20 @@ body {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
+}
+
+/*
+ * クリック可能な領域は、ホバー時に背景色でそれぞれ個別に示す。
+ * ノード名は非表示中だと中央寄せできないため、表示中の行のみホバーさせる。
+ *
+ * `.info-tree-checkbox` が background ショートハンドで背景色を transparent に
+ * 戻すため、それより後に定義して上書きさせる必要がある。
+ */
+.info-tree-checkbox:hover,
+.info-tree-checkbox:checked+.info-tree-label-node:hover,
+.info-tree-checkbox-spacer+.info-tree-label-node:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 #search-box {
