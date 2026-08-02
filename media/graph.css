@@ -133,6 +133,15 @@ body {
   opacity: 0.6;
 }
 
+/* 検索ヒットノードはグラフ側と同じオレンジで示し、ジャンプ中はさらに太字にする */
+.info-tree-label-node.search-hit {
+  color: #f19f23;
+}
+
+.info-tree-label-node.search-select {
+  font-weight: bold;
+}
+
 .info-tree-node-list {
   padding-left: 18px;
 }

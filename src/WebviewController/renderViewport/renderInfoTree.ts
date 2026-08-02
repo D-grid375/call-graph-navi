@@ -85,7 +85,7 @@ export function renderInfoTree(vm: GraphViewModel): void {
       }
 
       const nodeLabel = document.createElement('span');
-      nodeLabel.className = 'info-tree-label info-tree-label-node';
+      nodeLabel.className = buildNodeLabelClassName(node);
       nodeLabel.dataset.nodeId = node.id;
       nodeLabel.textContent = node.name;
       nodeRow.appendChild(nodeLabel);
@@ -98,6 +98,21 @@ export function renderInfoTree(vm: GraphViewModel): void {
   }
 
   applyVisibleChecks(vm);
+}
+
+/**
+ * ノード名ラベルのクラス名を組み立てる。
+ * 検索状態を示すクラスはグラフ側（`buildNodeClassName`）と同じ名前を使う。
+ */
+function buildNodeLabelClassName(node: NodeVM): string {
+  const classNames = ['info-tree-label', 'info-tree-label-node'];
+  if (node.view.searchSelect) {
+    classNames.push('search-select');
+  }
+  if (node.view.searchHit) {
+    classNames.push('search-hit');
+  }
+  return classNames.join(' ');
 }
 
 /**
