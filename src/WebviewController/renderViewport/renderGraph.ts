@@ -61,7 +61,7 @@ function buildNodeClassName(node: NodeVM): string {
   if (node.view.selected) {
     classNames.push('selected');
   }
-  if (node.view.highlighted) {
+  if (node.view.searchHit) {
     classNames.push('matched');
   }
   return classNames.join(' ');

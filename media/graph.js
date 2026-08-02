@@ -120,7 +120,7 @@
         view: {
           visibility: "visible",
           selected: false,
-          highlighted: false
+          searchHit: false
         }
       })),
       edges: data.edges.map((edge) => ({
@@ -133,13 +133,13 @@
       }))
     };
   }
-  function updateHighlightedNodes(vm, targetIds) {
+  function updateSearchHitNodes(vm, targetIds) {
     const hitSet = new Set(targetIds);
     let changed = false;
     for (const node of vm.nodes) {
-      const highlighted = node.view.visibility === "visible" && hitSet.has(node.id);
-      if (node.view.highlighted !== highlighted) {
-        node.view.highlighted = highlighted;
+      const searchHit = node.view.visibility === "visible" && hitSet.has(node.id);
+      if (node.view.searchHit !== searchHit) {
+        node.view.searchHit = searchHit;
         changed = true;
       }
     }
@@ -467,7 +467,7 @@
     if (node.view.selected) {
       classNames.push("selected");
     }
-    if (node.view.highlighted) {
+    if (node.view.searchHit) {
       classNames.push("matched");
     }
     return classNames.join(" ");
@@ -1444,10 +1444,10 @@ Click: open source`;
   }
   function applySearchResultToView(result) {
     const vm = getViewModel();
-    const highlightChanged = vm ? updateHighlightedNodes(vm, result.hitIds) : false;
+    const searchHitChanged = vm ? updateSearchHitNodes(vm, result.hitIds) : false;
     updateIndicator(result.currentIndex, result.totalHits);
     updateCurrentMatchClass(result.currentNodeId);
-    if (result.hitsOrHighlightChanged || highlightChanged) {
+    if (result.hitsOrHighlightChanged || searchHitChanged) {
       renderViewport(false);
     }
     if (result.currentNodeId !== void 0) {

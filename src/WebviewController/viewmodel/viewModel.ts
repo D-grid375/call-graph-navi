@@ -3,7 +3,7 @@ import type { CallGraphData, FileGroup, GraphNode } from '../../shared/types';
 export interface NodeViewState {
   visibility: 'visible' | 'hidden';
   selected: boolean;
-  highlighted: boolean;
+  searchHit: boolean;
 }
 
 export interface EdgeViewState {
@@ -71,7 +71,7 @@ export function createGraphViewModel(data: CallGraphData): GraphViewModel {
       view: {
         visibility: 'visible',
         selected: false,
-        highlighted: false,
+        searchHit: false,
       },
     })),
     edges: data.edges.map((edge) => ({
@@ -86,14 +86,14 @@ export function createGraphViewModel(data: CallGraphData): GraphViewModel {
 }
 
 /**
- * ViewModel 上の `highlighted` フラグをヒット集合に合わせて更新する。
+ * ViewModel 上の `searchHit` フラグをヒット集合に合わせて更新する。
  * 可視かつヒット対象のノードのみ `true` にする。
  *
  * @param vm 対象 ViewModel
- * @param targetIds ハイライトすべきノード ID 列
- * @returns いずれかのノードの `highlighted` が変化したら `true`
+ * @param targetIds 検索ヒットとすべきノード ID 列
+ * @returns いずれかのノードの `searchHit` が変化したら `true`
  */
-export function updateHighlightedNodes(
+export function updateSearchHitNodes(
   vm: GraphViewModel,
   targetIds: string[]
 ): boolean {
@@ -101,10 +101,10 @@ export function updateHighlightedNodes(
   let changed = false;
 
   for (const node of vm.nodes) {
-    const highlighted =
+    const searchHit =
       node.view.visibility === 'visible' && hitSet.has(node.id);
-    if (node.view.highlighted !== highlighted) {
-      node.view.highlighted = highlighted;
+    if (node.view.searchHit !== searchHit) {
+      node.view.searchHit = searchHit;
       changed = true;
     }
   }

@@ -9,7 +9,7 @@ import {
 } from '../serach/search';
 import { centerOnNode } from '../transformView/transformView';
 import { renderViewport } from '../renderViewport/render';
-import { getViewModel, updateHighlightedNodes } from '../viewmodel/viewModel';
+import { getViewModel, updateSearchHitNodes } from '../viewmodel/viewModel';
 
 /**
  * 検索結果を完全にクリアする内部ヘルパー。
@@ -96,13 +96,13 @@ function searchMain(direction: SearchDirection) {
  */
 function applySearchResultToView(result: SearchResult): void {
   const vm = getViewModel();
-  const highlightChanged = vm
-    ? updateHighlightedNodes(vm, result.hitIds)
+  const searchHitChanged = vm
+    ? updateSearchHitNodes(vm, result.hitIds)
     : false;
   updateIndicator(result.currentIndex, result.totalHits);
   updateCurrentMatchClass(result.currentNodeId);
 
-  if (result.hitsOrHighlightChanged || highlightChanged) {
+  if (result.hitsOrHighlightChanged || searchHitChanged) {
     renderViewport(false);
   }
   if (result.currentNodeId !== undefined) {
