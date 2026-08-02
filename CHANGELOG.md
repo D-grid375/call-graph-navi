@@ -2,6 +2,11 @@
 
 All notable changes to this extension will be documented in this file.
 
+## 0.4.0
+- Add a tab that displays graph files and functions in a tree view.
+    - Display all files and functions, including hidden ones.
+    - Allow files and functions to be shown or hidden.
+    - Clicking the + button on the right side of the tab displaying “Direction: - | Visible Nodes: - | Visible Files: -” shows the tree.
 ## 0.3.0
 - Add SVG and PNG export formats for graph export.
     - SVG: Exports the current graph as a SVG file.
