@@ -9,10 +9,12 @@ import {
   btnExportSvg,
   btnExportPng,
   btnHideAll,
+  btnRedo,
   btnReset,
   btnSearchNext,
   btnSearchPrev,
   btnShowAll,
+  btnUndo,
   contextMenuIncoming,
   contextMenuOutgoing,
   contextMenuShowPathToRoot,
@@ -29,6 +31,11 @@ import {
   hideAllNodes,
   showAllNodes,
 } from '../interaction/buttonInteraction/button';
+import {
+  handleRedoClick,
+  handleUndoClick,
+  updateHistoryButtonState,
+} from '../interaction/buttonInteraction/historyButton';
 import { exportSvgToFile } from '../interaction/buttonInteraction/export/exportSvg';
 import { exportPngToFile } from '../interaction/buttonInteraction/export/exportPng';
 import {
@@ -78,13 +85,22 @@ import {
   setViewModel,
   setViewModelPersistStateCallback,
 } from '../viewmodel/viewModel';
+import {
+  clearHistory,
+  pushHistory,
+  setHistoryChangeCallback,
+  setHistoryPersistStateCallback,
+} from '../viewmodel/viewModelHistory';
 
-
+// 各コンポーネント コールバック設定
 setViewModelPersistStateCallback(persistState);
 setTransformPersistStateCallback(persistState);
 setRenderPersistStateCallback(persistState);
+setHistoryChangeCallback(updateHistoryButtonState);
+setHistoryPersistStateCallback(persistState);
 
 // ウィンドウ切り出し等で Webview が再生成された場合、前回の状態を復元する
+// 履歴も restoreState の中で復元されるため、ここでの記録は不要
 if (restoreState()) {
   renderViewport(false);
 }
@@ -95,7 +111,9 @@ window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'updateGraph') {
     updateExtensionOptions(event.data.extensionOptions);       // 拡張機能設定値更新：グラフ描画に設定値を参照するため先にコール必要
     setViewModel(createGraphViewModel(event.data.graphData));  // 生データからViewModelを生成
-    renderViewport(true);                                         // ViewModelからグラフ描画
+    clearHistory();                                            // 別グラフの履歴に Undo で戻らないようリセット
+    pushHistory();                                             // 初期状態を履歴の起点にする
+    renderViewport(true);                                      // ViewModelからグラフ描画
   }
 });
 
@@ -103,6 +121,8 @@ window.addEventListener('message', (event) => {
 btnReset.addEventListener('click', resetView);
 btnShowAll.addEventListener('click', showAllNodes);
 btnHideAll.addEventListener('click', hideAllNodes);
+btnUndo.addEventListener('click', handleUndoClick);
+btnRedo.addEventListener('click', handleRedoClick);
 btnExport.addEventListener('click', toggleExportMenu);
 btnExportPlantUml.addEventListener('click', () => { exportPlantUml(); hideExportMenu(); });
 btnExportSvg.addEventListener('click', () => { exportSvgToFile(); hideExportMenu(); });

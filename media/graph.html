@@ -43,6 +43,20 @@
     </span>
   </div>
   <div id="graph-container">
+    <div id="history-controls">
+      <button id="btn-undo" type="button" title="Undo" aria-label="Undo" disabled>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M9 14 L4 9 L9 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 9 H14 a5 5 0 0 1 0 10 H8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button id="btn-redo" type="button" title="Redo" aria-label="Redo" disabled>
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M15 14 L20 9 L15 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 9 H10 a5 5 0 0 0 0 10 H16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
     <div id="info">
       <div id="info-summary">
         <span id="info-summary-text">No graph loaded.</span>

@@ -11,6 +11,7 @@ import {
   type GraphViewModel,
   type NodeVM,
 } from '../../viewmodel/viewModel';
+import { pushHistory } from '../../viewmodel/viewModelHistory';
 import { resolveNodeFromEventTarget } from './graphInteractionUtil';
 
 let contextMenuNode: NodeVM | null = null;
@@ -105,6 +106,7 @@ export function handleContextMenuShowPathToRootClick(): void {
     return;
   }
   applyPathVisualization(contextMenuNode.id);
+  pushHistory();
   renderViewport(true);
   hideNodeContextMenu();
 }

@@ -25,6 +25,44 @@ body {
   z-index: 10;
 }
 
+/* グラフ画面の左上に浮かせる Undo / Redo の丸ボタン */
+#history-controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+}
+
+#history-controls button {
+  /* 縦幅は Info タブ（折りたたみ時）と揃える: 22px + padding 6px*2 + border 1px*2 */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 20, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  transition: filter 0.08s ease-out;
+}
+
+#history-controls button:hover:not(:disabled) {
+  filter: brightness(1.6);
+}
+
+/* 無効時は透明度ではなく矢印の色で示す（SVG は stroke="currentColor"） */
+#history-controls button:disabled {
+  color: #6a6a6a;
+  cursor: default;
+}
+
 #info {
   position: absolute;
   top: 8px;

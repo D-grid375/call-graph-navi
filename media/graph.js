@@ -14,6 +14,8 @@
   var infoTree = document.getElementById("info-tree");
   var btnReset = document.getElementById("btn-reset");
   var btnShowAll = document.getElementById("btn-show-all");
+  var btnUndo = document.getElementById("btn-undo");
+  var btnRedo = document.getElementById("btn-redo");
   var btnHideAll = document.getElementById("btn-hide-all");
   var btnExport = document.getElementById("btn-export");
   var exportMenu = document.getElementById("export-menu");
@@ -281,12 +283,88 @@
     );
   }
 
+  // src/WebviewController/viewmodel/viewModelHistory.ts
+  var HISTORY_LIMIT = 50;
+  var history = [];
+  var index = -1;
+  var historyChangeCallback;
+  function setHistoryChangeCallback(callback) {
+    historyChangeCallback = callback;
+  }
+  var persistStateCallback3;
+  function setHistoryPersistStateCallback(callback) {
+    persistStateCallback3 = callback;
+  }
+  function getHistoryState() {
+    return { history, index };
+  }
+  function setHistoryState(state) {
+    history = state?.history ?? [];
+    index = state?.index ?? -1;
+    historyChangeCallback?.();
+  }
+  function cloneViewModel(vm) {
+    return structuredClone(vm);
+  }
+  function pushHistory() {
+    const vm = getViewModel();
+    if (!vm) {
+      return;
+    }
+    history = history.slice(0, index + 1);
+    history.push(cloneViewModel(vm));
+    if (history.length > HISTORY_LIMIT) {
+      history.shift();
+    }
+    index = history.length - 1;
+    historyChangeCallback?.();
+    persistStateCallback3?.();
+  }
+  function undo() {
+    if (!canUndo()) {
+      return false;
+    }
+    index -= 1;
+    applyHistoryEntry();
+    return true;
+  }
+  function redo() {
+    if (!canRedo()) {
+      return false;
+    }
+    index += 1;
+    applyHistoryEntry();
+    return true;
+  }
+  function applyHistoryEntry() {
+    const entry = history[index];
+    if (!entry) {
+      return;
+    }
+    setViewModel(cloneViewModel(entry));
+    historyChangeCallback?.();
+    persistStateCallback3?.();
+  }
+  function canUndo() {
+    return index > 0;
+  }
+  function canRedo() {
+    return index >= 0 && index < history.length - 1;
+  }
+  function clearHistory() {
+    history = [];
+    index = -1;
+    historyChangeCallback?.();
+    persistStateCallback3?.();
+  }
+
   // src/WebviewController/snapshot/snapshot.ts
   function persistState() {
     const snapshot = {
       viewModel: getViewModel(),
       transform: getTransform(),
-      options: getExtensionOptions()
+      options: getExtensionOptions(),
+      history: getHistoryState()
     };
     vscode.setState(snapshot);
   }
@@ -298,6 +376,7 @@
     setViewModel(snapshot.viewModel);
     setTransform(snapshot.transform);
     updateExtensionOptions(snapshot.options);
+    setHistoryState(snapshot.history);
     return true;
   }
 
@@ -768,9 +847,9 @@ Click: open source`;
   }
 
   // src/WebviewController/renderViewport/render.ts
-  var persistStateCallback3;
+  var persistStateCallback4;
   function setRenderPersistStateCallback(callback) {
-    persistStateCallback3 = callback;
+    persistStateCallback4 = callback;
   }
   function renderViewport(resetViewport) {
     const vm = getViewModel();
@@ -782,7 +861,7 @@ Click: open source`;
       return;
     }
     renderGraph(vm, resetViewport);
-    persistStateCallback3?.();
+    persistStateCallback4?.();
   }
 
   // src/WebviewController/interaction/buttonInteraction/export/exportPlantUml.ts
@@ -801,8 +880,8 @@ Click: open source`;
       (e) => e.view.visibility === "visible" && visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to)
     );
     const aliasByNodeId = /* @__PURE__ */ new Map();
-    visibleNodes.forEach((node, index) => {
-      aliasByNodeId.set(node.id, `${node.name}_r${index + 1}`);
+    visibleNodes.forEach((node, index2) => {
+      aliasByNodeId.set(node.id, `${node.name}_r${index2 + 1}`);
     });
     const nodesByFile = /* @__PURE__ */ new Map();
     for (const node of visibleNodes) {
@@ -865,6 +944,7 @@ Click: open source`;
       return;
     }
     setAllVisibility("visible");
+    pushHistory();
     renderViewport(false);
   }
   function hideAllNodes() {
@@ -873,6 +953,7 @@ Click: open source`;
       return;
     }
     setAllHiddenExceptRoot();
+    pushHistory();
     renderViewport(false);
   }
   function exportPlantUml() {
@@ -905,6 +986,22 @@ Click: open source`;
     for (const edge of vm.edges) {
       edge.view.visibility = "hidden";
     }
+  }
+
+  // src/WebviewController/interaction/buttonInteraction/historyButton.ts
+  function handleUndoClick() {
+    if (undo()) {
+      renderViewport(false);
+    }
+  }
+  function handleRedoClick() {
+    if (redo()) {
+      renderViewport(false);
+    }
+  }
+  function updateHistoryButtonState() {
+    btnUndo.disabled = !canUndo();
+    btnRedo.disabled = !canRedo();
   }
 
   // src/WebviewController/interaction/buttonInteraction/export/exportUtil.ts
@@ -1088,6 +1185,7 @@ Click: open source`;
       return;
     }
     applyPathVisualization(contextMenuNode.id);
+    pushHistory();
     renderViewport(true);
     hideNodeContextMenu();
   }
@@ -1212,6 +1310,7 @@ Click: open source`;
     }
     hideFile(vm, filePath);
     hideUnreachableNodes(vm);
+    pushHistory();
     renderViewport(false);
   }
   function handleNodeRemoveClick(event) {
@@ -1238,6 +1337,7 @@ Click: open source`;
     }
     hideNodes(vm, /* @__PURE__ */ new Set([nodeId]));
     hideUnreachableNodes(vm);
+    pushHistory();
     renderViewport(false);
   }
 
@@ -1266,6 +1366,7 @@ Click: open source`;
       }
       unhideFile(vm, filePath);
       hideUnreachableNodes(vm);
+      pushHistory();
       renderViewport(false);
     } else {
       const vm = getViewModel();
@@ -1274,6 +1375,7 @@ Click: open source`;
       }
       hideFile(vm, filePath);
       hideUnreachableNodes(vm);
+      pushHistory();
       renderViewport(false);
     }
   }
@@ -1312,6 +1414,7 @@ Click: open source`;
       }
       unhideNode(vm, nodeId);
       hideUnreachableNodes(vm);
+      pushHistory();
       renderViewport(false);
     } else {
       nodeRemoveFromVM(nodeId);
@@ -1426,8 +1529,8 @@ Click: open source`;
     }
     return true;
   }
-  function wrapIndex(index, length) {
-    return (index % length + length) % length;
+  function wrapIndex(index2, length) {
+    return (index2 % length + length) % length;
   }
 
   // src/WebviewController/interaction/SearchInteraction.ts
@@ -1544,6 +1647,8 @@ Click: open source`;
   setViewModelPersistStateCallback(persistState);
   setTransformPersistStateCallback(persistState);
   setRenderPersistStateCallback(persistState);
+  setHistoryChangeCallback(updateHistoryButtonState);
+  setHistoryPersistStateCallback(persistState);
   if (restoreState()) {
     renderViewport(false);
   }
@@ -1551,12 +1656,16 @@ Click: open source`;
     if (event.data && event.data.type === "updateGraph") {
       updateExtensionOptions(event.data.extensionOptions);
       setViewModel(createGraphViewModel(event.data.graphData));
+      clearHistory();
+      pushHistory();
       renderViewport(true);
     }
   });
   btnReset.addEventListener("click", resetView);
   btnShowAll.addEventListener("click", showAllNodes);
   btnHideAll.addEventListener("click", hideAllNodes);
+  btnUndo.addEventListener("click", handleUndoClick);
+  btnRedo.addEventListener("click", handleRedoClick);
   btnExport.addEventListener("click", toggleExportMenu);
   btnExportPlantUml.addEventListener("click", () => {
     exportPlantUml();

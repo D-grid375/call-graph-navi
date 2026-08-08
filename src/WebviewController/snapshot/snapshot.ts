@@ -7,11 +7,17 @@ import {
   setViewModel,
   type GraphViewModel,
 } from '../viewmodel/viewModel';
+import {
+  getHistoryState,
+  setHistoryState,
+  type HistoryState,
+} from '../viewmodel/viewModelHistory';
 
 interface PersistedState {
   viewModel: GraphViewModel | null;
   transform: Transform;
   options: ExtensionOptions;
+  history: HistoryState;
 }
 
 export function persistState(): void {
@@ -19,6 +25,7 @@ export function persistState(): void {
     viewModel: getViewModel(),
     transform: getTransform(),
     options: getExtensionOptions(),
+    history: getHistoryState(),
   };
   vscode.setState(snapshot);
 }
@@ -31,5 +38,6 @@ export function restoreState(): boolean {
   setViewModel(snapshot.viewModel);
   setTransform(snapshot.transform);
   updateExtensionOptions(snapshot.options);
+  setHistoryState(snapshot.history);
   return true;
 }

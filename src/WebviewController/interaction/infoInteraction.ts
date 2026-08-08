@@ -2,6 +2,7 @@ import { getViewModel, unhideNode, unhideFile, hideUnreachableNodes, hideFile } 
 import { nodeRemoveFromVM } from './graphInteraction/nodeClick';
 import { renderViewport } from '../renderViewport/render';
 import { applyExpandedState } from '../renderViewport/renderInfoTree';
+import { pushHistory } from '../viewmodel/viewModelHistory';
 import { centerOnNode } from '../transformView/transformView';
 
 let expanded = false;
@@ -32,6 +33,7 @@ export function handleInfoTreeFileClick(event: MouseEvent): void {
     }
     unhideFile(vm, filePath);
     hideUnreachableNodes(vm);
+    pushHistory();
     renderViewport(false);
   } else {
     // 非表示処理
@@ -41,6 +43,7 @@ export function handleInfoTreeFileClick(event: MouseEvent): void {
     }
     hideFile(vm, filePath);
     hideUnreachableNodes(vm);
+    pushHistory();
     renderViewport(false);
   }
 }
@@ -89,9 +92,10 @@ export function handleInfoTreeNodeClick(event: MouseEvent): void {
     }
     unhideNode(vm, nodeId);
     hideUnreachableNodes(vm);
+    pushHistory();
     renderViewport(false);
   } else {
-    // 非表示処理
+    // 非表示処理（履歴記録・再描画は nodeRemoveFromVM 側で行う）
     nodeRemoveFromVM(nodeId);
   }
 }

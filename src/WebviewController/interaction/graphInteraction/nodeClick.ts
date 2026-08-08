@@ -8,6 +8,7 @@ import {
   type NodeVM,
 } from '../../viewmodel/viewModel';
 import { renderViewport } from '../../renderViewport/render';
+import { pushHistory } from '../../viewmodel/viewModelHistory';
 import { hideNodeContextMenu } from './nodeContextMenu';
 import { resolveNodeFromEventTarget } from './graphInteractionUtil';
 
@@ -87,6 +88,7 @@ export function handleFolderClick(event: MouseEvent): void {
 
   hideFile(vm, filePath);
   hideUnreachableNodes(vm);
+  pushHistory();
   renderViewport(false);
 }
 
@@ -128,5 +130,6 @@ export function nodeRemoveFromVM(nodeId: string): void {
   hideNodes(vm, new Set([nodeId]));
   hideUnreachableNodes(vm);
 
+  pushHistory();
   renderViewport(false);
 }
